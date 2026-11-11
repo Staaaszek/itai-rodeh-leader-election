@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Budowanie projektu na Ubuntu.
 #
-#   ./build.sh deps         instaluje pakiety (apt, wymaga sudo)
-#   ./build.sh              = ./build.sh kod raport
+#   ./build.sh deps         instaluje Go (apt, wymaga sudo)
+#   ./build.sh              = ./build.sh kod
 #   ./build.sh kod          kompiluje program Go -> kod/itairodeh
 #   ./build.sh bench [k]    pomiary (k seedów, domyślnie 20) -> raport/tabela*.tex
 #   ./build.sh raport       raport/raport.pdf (latexmk + pdflatex)
@@ -15,9 +15,7 @@ root="$(cd "$(dirname "$0")" && pwd)"
 
 deps() {
   sudo apt-get update
-  sudo apt-get install -y golang-go latexmk texlive-latex-recommended \
-    texlive-latex-extra texlive-pictures texlive-lang-polish lmodern \
-    fonts-lmodern python3
+  sudo apt-get install -y golang-go
   check_go
 }
 
@@ -44,7 +42,7 @@ bench() {
 }
 
 raport() {
-  command -v latexmk >/dev/null || { echo "brak latexmk — uruchom: ./build.sh deps" >&2; exit 1; }
+  command -v latexmk >/dev/null || { echo "brak latexmk (gotowy raport: raport/raport.pdf)" >&2; exit 1; }
   [ -f "$root/raport/tabela.tex" ] && [ -f "$root/raport/tabela_c.tex" ] || bench
   (cd "$root/raport" && latexmk -pdf -interaction=nonstopmode -halt-on-error raport.tex >/dev/null)
   echo "ok: raport/raport.pdf"
@@ -65,7 +63,7 @@ clean() {
 }
 
 case "${1:-}" in
-  "")                 kod; raport ;;
+  "")                 kod ;;
   all)                kod; bench; raport; prezentacja ;;
   bench|demo)         t="$1"; shift; "$t" "$@" ;;
   deps|kod|raport|prezentacja|clean) "$1" ;;

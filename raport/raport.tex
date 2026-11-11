@@ -398,11 +398,11 @@ wysłano tylko 6 wiadomości \msg{RESULT} fazy 0, resztę pierścienia zrestarto
 w fazie 1 zostaje jeden kandydat, który zostaje liderem i ustala $n=6$; podsumowanie: \msg{BIT} 36 $=3\cdot6\cdot2$, \msg{VERIFY} 35, \msg{RESULT} 13,
 \msg{COUNT} 6, \msg{SIZE} 6.
 
-Całość (program, tabele, ten raport) buduje skrypt w katalogu głównym:
+Alternatywnie skrypt w katalogu głównym:
 \begin{verbatim}
-./build.sh deps      # jednorazowo: pakiety apt (Go, TeX Live z polskim)
-./build.sh           # kompilacja programu + raport/raport.pdf
-./build.sh bench     # ponowne pomiary -> raport/tabela*.tex, potem raport
+./build.sh deps      # jednorazowo: instaluje Go (apt)
+./build.sh           # kompilacja programu -> kod/itairodeh
+./build.sh demo      # przebieg z prezentacji (seed 52)
 \end{verbatim}
 
 \end{document}
