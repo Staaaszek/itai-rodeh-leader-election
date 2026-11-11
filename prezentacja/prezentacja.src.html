@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Itai–Rodeh §4.3.2 — prezentacja</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ---------- fonty (Latin Modern, osadzone przy budowaniu) ---------- */
+@font-face{font-family:"LMS";src:local("Latin Modern Sans"),url("FONT:lmsans10-regular.otf");font-weight:400;font-style:normal}
+@font-face{font-family:"LMS";src:url("FONT:lmsans10-bold.otf");font-weight:700;font-style:normal}
+@font-face{font-family:"LMS";src:url("FONT:lmsans10-oblique.otf");font-weight:400;font-style:italic}
+@font-face{font-family:"LMR";src:url("FONT:lmroman10-italic.otf");font-weight:400;font-style:italic}
+@font-face{font-family:"LMR";src:url("FONT:lmroman10-regular.otf");font-weight:400;font-style:normal}
+@font-face{font-family:"LMM";src:url("FONT:lmmono10-regular.otf");font-weight:400}
+@font-face{font-family:"LMM";src:url("FONT:lmmonolt10-bold.otf");font-weight:700}
+
+:root{
+  --blue:#3333B3; --blue-d:#23237d; --blue-dd:#1a1a5e; --blue-l:#e8e8f6; --blue-ll:#f4f4fb;
+  --alert:#cc0000; --ex:#007a33; --ex-l:#e5f3ea; --al-l:#f9e5e5;
+  --act:#3333B3; --cand:#e07b00; --lead:#8a1ca8; --ok:#1b8a3a; --sleep:#b8b8b8; --red:#cc2222;
+  --mBIT:#3333B3; --mVER:#e07b00; --mRES:#1b8a3a; --mCNT:#8a1ca8; --mWAKE:#9a9a9a;
+  --ink:#111; --ink2:#444; --ink3:#777;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#2b2b2b;overflow:hidden}
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#deck{position:relative;width:1280px;height:720px;transform-origin:center center;flex:none}
+.slide{position:absolute;inset:0;background:#fff;color:var(--ink);font-family:"LMS","Latin Modern Sans","CMU Sans Serif",Helvetica,Arial,sans-serif;font-size:25px;line-height:1.32;display:none;overflow:hidden}
+.slide.on{display:block}
+.ftitle{height:66px;background:var(--blue);color:#fff;font-size:31px;padding:13px 34px 0;letter-spacing:.2px}
+.ftitle small{font-size:20px;opacity:.85;margin-left:10px}
+.body{position:absolute;left:0;right:0;top:66px;bottom:26px;padding:22px 40px 10px}
+.foot{position:absolute;left:0;right:0;bottom:0;height:26px;display:flex;font-size:15px;color:#fff}
+.foot div{flex:1;display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden}
+.foot .f1{background:var(--blue-dd)}.foot .f2{background:var(--blue-d)}.foot .f3{background:var(--blue);justify-content:space-between;padding:0 16px}
+.m{font-family:"LMR","Latin Modern Roman","Latin Modern Math",serif;font-style:italic;white-space:nowrap}
+.mr{font-family:"LMR","Latin Modern Roman","Latin Modern Math",serif;font-style:normal;white-space:nowrap}
+b,strong{font-weight:700}
+.al{color:var(--alert)}
+.st{color:var(--blue)}
+ul{margin:6px 0;padding-left:28px;list-style:none}
+ul li{position:relative;margin:7px 0}
+ul li::before{content:"";position:absolute;left:-22px;top:.42em;border-left:10px solid var(--blue);border-top:6px solid transparent;border-bottom:6px solid transparent}
+ul ul{font-size:.88em;margin:2px 0}
+ul ul li::before{border-left-width:7px;border-top-width:4px;border-bottom-width:4px;top:.5em}
+.cols{display:grid;gap:30px;height:100%}
+.c2{grid-template-columns:1fr 1fr}.c64{grid-template-columns:6fr 4fr}.c46{grid-template-columns:4fr 6fr}.c55{grid-template-columns:55fr 45fr}.c73{grid-template-columns:7fr 3fr}
+/* bloki beamerowe */
+.blk{margin:10px 0 14px;border-radius:5px;overflow:hidden;box-shadow:1px 2px 3px rgba(0,0,0,.18)}
+.blk>.h{background:var(--blue);color:#fff;padding:5px 14px;font-size:.92em}
+.blk>.c{background:var(--blue-l);padding:8px 14px 10px;font-size:.92em}
+.blk.alert>.h{background:var(--alert)}.blk.alert>.c{background:var(--al-l)}
+.blk.ex>.h{background:var(--ex)}.blk.ex>.c{background:var(--ex-l)}
+.proof{margin:8px 0;font-size:.88em}
+.proof>.ph{font-style:italic;color:var(--blue)}
+.qed{float:right;color:var(--ink2)}
+table.bt{border-collapse:collapse;font-size:.86em;margin:6px 0}
+table.bt th{border-top:2px solid #222;border-bottom:1px solid #222;padding:5px 12px;text-align:left;font-weight:700}
+table.bt td{padding:5px 12px;border-bottom:1px solid #ddd}
+table.bt tr:last-child td{border-bottom:2px solid #222}
+table.bt td.r,table.bt th.r{text-align:right;font-variant-numeric:tabular-nums}
+/* tytułowy */
+.title-slide .tbox{position:absolute;left:110px;right:110px;top:150px;background:var(--blue);color:#fff;border-radius:8px;padding:26px 30px;text-align:center;box-shadow:2px 3px 6px rgba(0,0,0,.25)}
+.title-slide .t1{font-size:38px;line-height:1.22}
+.title-slide .t2{font-size:22px;margin-top:12px;opacity:.92}
+.title-slide .who{position:absolute;left:0;right:0;top:400px;text-align:center;font-size:26px}
+.title-slide .when{position:absolute;left:0;right:0;top:442px;text-align:center;font-size:21px;color:var(--ink2)}
+/* build (\pause) */
+.b{transition:opacity .45s, transform .45s}
+.b.hid{opacity:0;transform:translateY(6px)}
+/* kod */
+.code{font-family:"LMM","Latin Modern Mono","DejaVu Sans Mono",monospace;font-size:16px;line-height:1.36;background:var(--blue-ll);border:1px solid #d6d6ea;border-radius:5px;padding:8px 0;margin:0;white-space:pre;overflow:hidden;tab-size:4}
+.code .ln{display:block;padding:0 12px;border-left:4px solid transparent;transition:background .25s}
+.code .ln.hl{background:#fff1c4;border-left-color:var(--cand)}
+.code .ln.dim{opacity:.38}
+.code .kw{color:#1f1fa0;font-weight:700}.code .ty{color:#006b6b}.code .cm{color:#7a7a7a;font-style:italic}.code .st2{color:#a0306a}.code .nu{color:#a05a00}
+.code.small{font-size:15px}
+/* karty stanu */
+.card{border:1px solid #c8c8e0;border-radius:6px;background:#fff;font-size:17px;margin-bottom:10px;box-shadow:1px 1px 3px rgba(0,0,0,.08)}
+.card .ch{background:var(--blue-l);padding:4px 10px;font-weight:700;color:var(--blue-d);font-size:16px}
+.card table{border-collapse:collapse;width:100%}
+.card td{padding:3px 10px;border-top:1px solid #eee;font-family:"LMM",monospace;font-size:16px}
+.card td:first-child{color:#555;width:42%}
+.card td.chg{background:#ffe08a;transition:background .6s}
+.msgchip{display:inline-block;font-family:"LMM",monospace;font-size:15px;padding:1px 7px;border-radius:4px;border:2px solid;margin:2px 4px 2px 0;background:#fff}
+.note{font-size:18px;color:var(--ink2);margin-top:6px;min-height:48px}
+.cap{font-size:18px;color:var(--ink2);text-align:center;min-height:50px;margin-top:2px}
+.log{font-family:"LMM",monospace;font-size:13.5px;line-height:1.35;background:#fafafa;border:1px solid #ddd;border-radius:5px;padding:6px 9px;overflow:hidden;white-space:pre}
+.log .n{color:var(--blue);font-weight:700}
+.log .w{color:var(--alert);font-weight:700}
+.stats{display:flex;flex-wrap:wrap;gap:6px;font-size:16px;margin:6px 0}
+.stats span{background:var(--blue-l);border-radius:4px;padding:2px 8px}
+.stats b{font-variant-numeric:tabular-nums}
+svg text{font-family:"LMS",Helvetica,sans-serif}
+svg .mt{font-family:"LMR",serif;font-style:italic}
+.node{}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:15px;color:var(--ink2);justify-content:center}
+.legend i{display:inline-block;width:13px;height:13px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.hlstatic{box-shadow:inset 0 0 0 3px var(--cand)}
+.hlcell{animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:inset 0 0 0 3px var(--cand)}50%{box-shadow:inset 0 0 0 6px var(--cand)}}
+/* UI */
+#hud{position:fixed;right:10px;bottom:8px;font:12px Helvetica,sans-serif;color:#bbb;z-index:9;pointer-events:none}
+#help{position:fixed;inset:0;background:rgba(0,0,0,.72);color:#fff;display:none;align-items:center;justify-content:center;z-index:10;font:17px/1.6 Helvetica,sans-serif}
+#help div{background:#222;padding:24px 34px;border-radius:10px}
+#help kbd{background:#444;border-radius:4px;padding:1px 7px;margin-right:6px}
+#hint{position:absolute;right:16px;bottom:32px;font:14px "LMS",Helvetica,sans-serif;color:#9a9ab8;z-index:5;display:none;pointer-events:none}
+#deck{cursor:default}
+</style>
+</head>
+<body>
+<div id="stage"><div id="deck">
+
+<!-- ======================= 1 TYTUŁ ======================= -->
+<section class="slide title-slide" data-dwell="5">
+  <div class="tbox">
+    <div class="t1">Wybór lidera w asynchronicznym pierścieniu<br>przy przybliżonej znajomości <span class="m">n</span></div>
+    <div class="t2">A. Itai, M. Rodeh — <i>Symmetry Breaking in Distributed Networks</i> (1990), §4.3.2</div>
+  </div>
+  <div class="who" id="authorName"></div>
+  <div class="when">5 listopada 2026</div>
+</section>
+
+<!-- ======================= 2 WARIANTY ======================= -->
+<section class="slide" data-dwell="6">
+  <div class="ftitle">Cztery warianty w artykule</div>
+  <div class="body" style="padding-top:40px">
+    <table class="bt" style="font-size:26px;margin:0 auto 40px;width:1000px">
+      <tr><th></th><th><span class="m">n</span> znane</th><th><span class="m">N ≤ n ≤ 2N−1</span></th></tr>
+      <tr><td><b>synchroniczny</b></td><td>§2: <span class="m">O(n)</span> bitów</td><td>§4.3.1: <span class="m">O(n)</span> bitów</td></tr>
+      <tr><td><b>asynchroniczny</b></td><td>§3.4: <span class="m">O(n log n)</span> bitów</td><td id="myCell" class="hlstatic"><b>§4.3.2: ?</b></td></tr>
+    </table>
+    <ul style="font-size:26px;width:1000px;margin:0 auto">
+      <li><b>brak zegara</b> ⇒ cisza nie niesie informacji</li>
+      <li><b>brak <span class="m">n</span></b> ⇒ procesor nie rozpozna własnej wiadomości</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ======================= 3 MODEL ======================= -->
+<section class="slide" data-dwell="8">
+  <div class="ftitle">Model</div>
+  <div class="body" style="padding-top:30px">
+    <div class="cols c2" style="height:auto;font-size:25px">
+      <div class="blk"><div class="h">Sieć</div><div class="c"><ul>
+        <li>pierścień <b>jednokierunkowy</b></li>
+        <li><b>asynchroniczny</b>, kanały <b>FIFO</b></li>
+        <li>procesory <b>anonimowe</b>, losowe</li>
+        <li>start: <b>wake-up</b> u ≥ 1 procesora;<br>każda wiadomość budzi</li>
+      </ul></div></div>
+      <div class="blk"><div class="h">Wiedza i cel</div><div class="c"><ul>
+        <li>znane <span class="m">N</span>: <span class="m">N ≤ n ≤ 2N−1</span></li>
+        <li><b>1 lider</b>, każdy zna <span class="m">n</span></li>
+        <li><b>terminacja procesorów</b></li>
+        <li><b>Las Vegas</b>; koszt: <span class="m">E[#bitów]</span><br>dla najgorszego harmonogramu</li>
+      </ul></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= DLACZEGO PRZEDZIAŁ ======================= -->
+<section class="slide" data-static="twins" data-dwell="12">
+  <div class="ftitle">Dlaczego <span class="m" style="color:#fff">N ≤ n ≤ 2N−1</span>?</div>
+  <div class="body" style="font-size:24px;padding-top:16px">
+    <div class="cols" style="grid-template-columns:620px 1fr;gap:20px">
+      <div>
+        <div class="blk"><div class="h">Twierdzenie (Tw. 4.1 w artykule)</div><div class="c">Algorytm z terminacją procesorów, nigdy niemylący się dla rozmiaru <span class="m">m</span>, musi się mylić dla rozmiaru <span class="m">2m</span>.</div></div>
+        <div class="proof"><span class="ph">Dowód.</span> Weź poprawne zakończone wykonanie na <span class="m">R</span> i sklej dwie kopie w <span class="m">R′</span>. Bliźniaki dostają te same rzuty i ten sam harmonogram, więc widzą to samo co w <span class="m">R</span>. Kończą z wynikiem <span class="m">m</span> zamiast <span class="m">2m</span>, a liderów jest dwóch. <span class="qed">∎</span></div>
+        <div class="blk ex"><div class="h">Wniosek</div><div class="c"><span class="m">[N, 2N−1]</span> nie zawiera pary <span class="m">m, 2m</span>. Po dodaniu <span class="m">2N</span> para <span class="m">N, 2N</span> już by była.</div></div>
+      </div>
+      <div class="cols" style="grid-template-columns:40fr 60fr;gap:0;align-items:center">
+        <svg id="twR" viewBox="0 0 230 330" style="width:100%"></svg>
+        <svg id="twR2" viewBox="0 0 340 330" style="width:100%"></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= ALGORYTM ======================= -->
+<section class="slide" data-static="flow" data-dwell="10">
+  <div class="ftitle">Algorytm</div>
+  <div class="body" style="padding:6px 14px 4px"><svg id="flowSvg" viewBox="0 0 1240 600" style="width:100%;height:100%"></svg></div>
+</section>
+
+<!-- ======================= 4 SELEKCJA ======================= -->
+<section class="slide" data-anim="selection" data-dwell="4">
+  <div class="ftitle">1. Selekcja (§3.4): „0 po 1” odpada</div>
+  <div class="body">
+    <div class="cols" style="grid-template-columns:4fr 6fr">
+      <div style="font-size:24px;padding-top:30px">
+        <ul>
+          <li>aktywny losuje bit, wysyła do następnego aktywnego</li>
+          <li>mój <b>0</b>, poprzedniego <b>1</b> ⇒ odpadam</li>
+          <li>ktoś zawsze przeżywa</li>
+          <li>odpada średnio <b>¼</b>; runda = <b><span class="m">n</span></b> wiadomości</li>
+        </ul>
+      </div>
+      <div>
+        <svg id="selSvg" viewBox="0 0 640 450" style="width:100%;height:450px"></svg>
+        <div class="cap" id="selCap"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= SELEKCJA: FORMALNIE ======================= -->
+<section class="slide" data-dwell="12">
+  <div class="ftitle">1. Selekcja — formalnie</div>
+  <div class="body" style="font-size:27px;padding-top:12px">
+    <div class="blk"><div class="h">Lemat 1</div><div class="c">Po selekcji jest ≥ 1 kandydat.</div></div>
+    <div class="proof"><span class="ph">Dowód.</span> Odpada tylko <span class="m">0</span> z poprzednikiem <span class="m">1</span>, a ten poprzednik przeżywa. Jedyny aktywny dostaje własny bit. <span class="qed">∎</span></div>
+    <div class="blk"><div class="h">Lemat 2</div><div class="c">Aktywny dostaje dokładnie jeden bit na rundę, w kolejności rund.</div></div>
+    <div class="proof"><span class="ph">Dowód</span> (indukcja). Pasywni przekazują bez zmian, FIFO trzyma kolejność. Gdy poprzednik <span class="m">Q</span> odpada w rundzie <span class="m">s</span>, wysłał już bity <span class="m">1..s</span>, a dalej przekazuje bity <span class="m">s+1, …</span> od swojego poprzednika. <span class="qed">∎</span></div>
+    <div class="blk ex"><div class="h">Ile rund? <span class="m" style="color:#fff">c = ⌈2 log<sub>4/3</sub>(2N)⌉</span></div><div class="c">
+      <span class="m">Y<sub>t</sub></span> = #aktywnych − 1 ⇒ <span class="m">E[Y<sub>t</sub>] ≤ (n−1)(¾)<sup>t</sup></span>, bo przy <span class="m">m ≥ 2</span> odpada średnio ¼<br>
+      <span class="m">(¾)<sup>c</sup> ≤ 1/(2N)<sup>2</sup> &lt; 1/n<sup>2</sup></span>, bo <span class="m">n &lt; 2N</span> &nbsp;⇒&nbsp; <span class="m">Pr[a ≥ 2] ≤ E[Y<sub>c</sub>] &lt; 1/n</span> (Markov)</div></div>
+  </div>
+</section>
+
+<!-- ======================= 6 KLUCZOWY POMYSŁ ======================= -->
+<section class="slide" data-anim="route" data-dwell="4">
+  <div class="ftitle">2. Weryfikacja: licznik na odległość <span class="m" style="color:#fff">2N−1</span></div>
+  <div class="body">
+    <p style="margin:0 0 4px;font-size:23px;text-align:center"><span class="msgchip" style="border-color:var(--mVER)">VERIFY(d, k)</span> — <span class="m">d</span>: przebyte krawędzie, <span class="m">k</span>: napotkani kandydaci</p>
+    <div class="cols c2" style="height:470px;gap:10px">
+      <div><svg id="rtA" viewBox="0 0 560 400" style="width:100%;height:400px"></svg><div class="cap" id="rtAc"></div></div>
+      <div><svg id="rtB" viewBox="0 0 560 400" style="width:100%;height:400px"></svg><div class="cap" id="rtBc"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= WERYFIKACJA: FORMALNIE ======================= -->
+<section class="slide" data-dwell="12">
+  <div class="ftitle">2. Weryfikacja — formalnie</div>
+  <div class="body" style="font-size:25px;padding-top:14px">
+    <div class="blk"><div class="h">Lemat 3</div><div class="c">
+      <span class="m">N ≤ n ≤ 2N−1</span> ⇒ trasa długości <span class="m">2N−1</span> z <span class="m">X</span> odwiedza wszystkie węzły i wraca do <span class="m">X</span> <b>dokładnie raz</b>.</div></div>
+    <div class="proof"><span class="ph">Dowód.</span> Trasa mija odległości <span class="m">1, …, 2N−1</span>; <span class="m">X</span> leży w odległościach podzielnych przez <span class="m">n</span>.
+      <span class="m">n ≤ 2N−1</span> ⇒ odległość <span class="m">n</span> jest na trasie.
+      <span class="m">2n ≥ 2N &gt; 2N−1</span> ⇒ odległość <span class="m">2n</span> już nie. <span class="qed">∎</span></div>
+    <div class="blk ex"><div class="h">Wniosek</div><div class="c">jeden kandydat ⇒ <span class="m">k = 2</span>, kilku ⇒ <span class="m">k ≥ 3</span></div></div>
+    <div class="blk"><div class="h">Lemat 4</div><div class="c">Gdy VERIFY dociera do węzła, ten już wie, czy jest kandydatem.</div></div>
+    <div class="proof"><span class="ph">Dowód.</span> Na każdej krawędzi: <span class="m">BIT<sub>p</sub> &lt; VERIFY<sub>p</sub> &lt; BIT<sub>p+1</sub></span> (FIFO). <span class="qed">∎</span></div>
+    <div style="margin-top:12px"><b>Koszt:</b> ≤ <span class="m">a(2N−1)</span> wiadomości, <span class="m">a</span> = liczba kandydatów</div>
+  </div>
+</section>
+
+<!-- ======================= POWIADOMIENIE ======================= -->
+<section class="slide" data-dwell="12">
+  <div class="ftitle">3. Powiadomienie i ponowienie — formalnie</div>
+  <div class="body" style="font-size:27px;padding-top:18px">
+    <ul style="margin:0 0 12px">
+      <li>koniec trasy VERIFY wysyła <span class="msgchip" style="border-color:var(--mRES)">RESULT</span> na kolejne <span class="m">2N−1</span> krawędzi</li>
+      <li>wiadomość ze starszej fazy — wyrzuć; z nowszej — restart</li>
+    </ul>
+    <div class="blk"><div class="h">Lemat 5</div><div class="c">Wszystkie werdykty jednej fazy są równe i prawdziwe.</div></div>
+    <div class="proof"><span class="ph">Dowód.</span> <span class="m">a = 1</span> ⇒ jedna trasa, <span class="m">k = 2</span>. <span class="m">a ≥ 2</span> ⇒ każda trasa mija <span class="m">X</span> i innego kandydata, <span class="m">k ≥ 3</span> (Lemat 3, 4). <span class="qed">∎</span></div>
+    <div class="blk ex"><div class="h">Twierdzenie (żywotność)</div><div class="c">Faza udaje się z prawd. <span class="m">&gt; 1 − 1/n</span> ⇒ <span class="m">E[#faz] &lt; 2</span>, koniec z prawd. 1.</div></div>
+    <div style="margin-top:12px"><b>Koszt:</b> ≤ <span class="m">a(2N−1)</span> wiadomości</div>
+  </div>
+</section>
+
+<!-- ======================= LICZENIE ======================= -->
+<section class="slide" data-dwell="12">
+  <div class="ftitle">4. Liczenie <span class="m" style="color:#fff">n</span> — formalnie</div>
+  <div class="body" style="font-size:26px;padding-top:16px">
+    <ul style="margin:0 0 12px">
+      <li>lider: <span class="msgchip" style="border-color:var(--mCNT)">COUNT(1)</span>, każdy węzeł <span class="m">j+1</span>; wraca do lidera z <span class="m">j = n</span></li>
+      <li>lider: <span class="msgchip" style="border-color:var(--mCNT)">SIZE(n)</span> w koło; każdy zapisuje i kończy</li>
+    </ul>
+    <div class="blk"><div class="h">Lemat 6</div><div class="c">Każdy procesor kończy z <span class="m">b<sub>v</sub> = n</span>.</div></div>
+    <div class="proof"><span class="ph">Dowód.</span> COUNT startuje tylko jedyny lider i rośnie o 1 na krawędź, więc wraca po <span class="m">n</span> krokach z <span class="m">n</span>. SIZE niesie tę wartość. <span class="qed">∎</span></div>
+    <div class="blk ex"><div class="h">Twierdzenie (bezpieczeństwo)</div><div class="c">Zawsze ≤ 1 lider, a na końcu każdy <span class="m">b<sub>v</sub> = n</span>.</div></div>
+    <div class="proof"><span class="ph">Dowód.</span> Werdykt „jedyny” ⇔ 1 kandydat (Lemat 5); wtedy nie ma kolejnej fazy. <span class="qed">∎</span></div>
+    <div style="margin-top:12px"><b>Koszt:</b> <span class="m">2n</span> wiadomości</div>
+  </div>
+</section>
+
+<!-- ======================= KOD: MAIN ======================= -->
+<section class="slide" data-dwell="10">
+  <div class="ftitle">Kod (Go): architektura — dyspozytor i gorutyny</div>
+  <div class="body" style="padding:10px 40px 6px">
+<pre class="code" data-code="code-main" style="font-size:16.5px;line-height:1.3;height:100%"></pre>
+  </div>
+</section>
+
+<!-- ======================= KOD: STAN ======================= -->
+<section class="slide" data-dwell="10">
+  <div class="ftitle">Kod (Go): stan procesora i wiadomości</div>
+  <div class="body" style="padding:10px 40px 6px">
+    <div class="cols" style="grid-template-columns:1fr 1.12fr;gap:16px">
+<pre class="code" data-code="code-state" style="font-size:17px;line-height:1.36"></pre>
+<pre class="code" data-code="code-state2" style="font-size:17px;line-height:1.36"></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= KOD: HANDLE ======================= -->
+<section class="slide" data-dwell="12">
+  <div class="ftitle">Kod (Go): obsługa wiadomości — start i selekcja</div>
+  <div class="body" style="padding:10px 40px 6px">
+    <div class="cols c2" style="gap:16px">
+<pre class="code" data-code="code-handle" style="font-size:17.5px;line-height:1.3"></pre>
+<pre class="code" data-code="code-bit" style="font-size:17.5px;line-height:1.3"></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= KOD: VERIFY/RESULT ======================= -->
+<section class="slide" data-dwell="12">
+  <div class="ftitle">Kod (Go): weryfikacja i powiadomienie</div>
+  <div class="body" style="padding:10px 40px 6px">
+    <div class="cols c2" style="gap:16px">
+<pre class="code" data-code="code-verify" style="font-size:17.5px;line-height:1.3"></pre>
+<pre class="code" data-code="code-result" style="font-size:17.5px;line-height:1.3"></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= KOD: COUNT/SIZE ======================= -->
+<section class="slide" data-dwell="12">
+  <div class="ftitle">Kod (Go): liczenie <span class="m" style="color:#fff">n</span></div>
+  <div class="body" style="padding:10px 40px 6px">
+<pre class="code" data-code="code-count" style="font-size:22px;line-height:1.3;height:100%"></pre>
+  </div>
+</section>
+
+<!-- ======================= 18 DEMO ======================= -->
+<section class="slide" data-anim="demo" data-dwell="6">
+  <div class="ftitle">Demo end-to-end: <span class="m" style="color:#fff">n = 6, N = 4, c = 3</span> <small>(1 wake-up, losowy harmonogram)</small></div>
+  <div class="body" style="padding-top:10px">
+    <div class="cols" style="grid-template-columns:520px 1fr;gap:18px">
+      <div>
+        <svg id="demoSvg" viewBox="0 0 520 440" style="width:100%;height:440px"></svg>
+        <div class="legend"><span><i style="background:var(--sleep)"></i>śpi</span><span><i style="background:var(--act)"></i>aktywny</span><span><i style="border:2px solid #888"></i>pasywny</span><span><i style="background:var(--cand)"></i>kandydat</span><span><i style="background:var(--lead)"></i>lider</span><span><i style="border:3px solid var(--ok)"></i>zna werdykt</span></div>
+      </div>
+      <div>
+        <div class="stats" id="demoStats" style="font-size:13.5px;gap:3px;flex-wrap:nowrap;white-space:nowrap"></div>
+        <div class="log" id="demoLog" style="height:480px;line-height:1.38"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= ZŁOŻONOŚĆ ======================= -->
+<section class="slide" data-dwell="10">
+  <div class="ftitle">Złożoność — podsumowanie</div>
+  <div class="body" style="padding-top:30px">
+    <table class="bt" style="font-size:29px;width:100%">
+      <tr><th>etap</th><th class="r">wiadomości na fazę</th><th class="r">bitów na wiadomość</th></tr>
+      <tr><td>1. selekcja</td><td class="r"><span class="m">c · n</span></td><td class="r"><span class="m">O(1)</span></td></tr>
+      <tr><td>2. weryfikacja</td><td class="r">≤ <span class="m">a(2N−1)</span></td><td class="r"><span class="m">O(log N)</span></td></tr>
+      <tr><td>3. powiadomienie</td><td class="r">≤ <span class="m">a(2N−1)</span></td><td class="r"><span class="m">O(log N)</span></td></tr>
+      <tr><td>4. liczenie <span class="m">n</span></td><td class="r"><span class="m">2n</span></td><td class="r"><span class="m">O(log n)</span></td></tr>
+    </table>
+    <ul style="font-size:28px;margin-top:30px">
+      <li><span class="m">c = O(log n)</span></li>
+      <li><span class="m">E[a] = O(1)</span></li>
+      <li><span class="m">E[#faz] &lt; 2</span></li>
+    </ul>
+    <div class="blk ex" style="margin-top:26px;font-size:31px"><div class="h">Twierdzenie</div><div class="c">Oczekiwany koszt: <b><span class="m">O(n log n)</span></b> wiadomości i bitów.</div></div>
+  </div>
+</section>
+
+<!-- ======================= PODSUMOWANIE ======================= -->
+<section class="slide" data-dwell="8">
+  <div class="ftitle">Podsumowanie</div>
+  <div class="body" style="padding-top:34px">
+    <table class="bt" style="font-size:26px;margin:0 auto 36px;width:1000px">
+      <tr><th></th><th><span class="m">n</span> znane</th><th><span class="m">N ≤ n ≤ 2N−1</span></th></tr>
+      <tr><td><b>synchroniczny</b></td><td>§2: <span class="m">O(n)</span></td><td>§4.3.1: <span class="m">O(n)</span></td></tr>
+      <tr><td><b>asynchroniczny</b></td><td>§3.4: <span class="m">O(n log n)</span></td><td id="sumCell" class="hlstatic"><b>§4.3.2: <span class="m">O(n log n)</span></b></td></tr>
+    </table>
+    <ul style="font-size:26px;width:1000px;margin:0 auto">
+      <li>trasa <span class="m">2N−1</span> zastępuje rozpoznawanie własnej wiadomości</li>
+      <li>werdykt jawnie; porządek: FIFO + numery faz</li>
+      <li>przybliżone <span class="m">n</span> nic nie kosztuje asymptotycznie</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ======================= KONIEC ======================= -->
+<section class="slide title-slide" data-dwell="6">
+  <div class="tbox" style="top:250px"><div class="t1">Dziękuję!</div><div class="t2">Pytania?</div></div>
+</section>
+
+<div id="hint">▶ kliknij, aby uruchomić animację</div>
+</div></div>
+<div id="hud"></div>
+<div id="help"><div>
+<b>Sterowanie</b><br>
+<b>Klik myszą</b> na slajdzie: uruchom animację rysunku · w trakcie: pauza · po końcu: powtórz<br>
+<kbd>→</kbd><kbd>Spacja</kbd><kbd>PgDn</kbd> (pilot): najpierw uruchamia animację slajdu, następne naciśnięcie — kolejny slajd<br>
+<kbd>←</kbd><kbd>PgUp</kbd> poprzedni slajd · <kbd>Home</kbd>/<kbd>End</kbd><br>
+<kbd>R</kbd> odtwórz animację od nowa · <kbd>P</kbd> pauza<br>
+<kbd>A</kbd> tryb AUTO: wszystko samo (animacje + przejścia) — np. do próby<br>
+<kbd>+</kbd>/<kbd>−</kbd> szybkość animacji · <kbd>0</kbd> szybkość 1× · <kbd>F</kbd> pełny ekran · <kbd>H</kbd> pomoc<br>
+<span style="opacity:.7">Tekst jest zawsze widoczny od razu; animowane są tylko rysunki — dopiero po kliknięciu.</span>
+</div></div>
+
+<!-- ======================= KOD GO (źródła do slajdów) ======================= -->
+<script type="text/x-go" id="code-state">
+type Role int
+
+const (
+	Sleep Role = iota //#role
+	Active            //#role
+	Passive           //#role
+	Candidate         //#role
+	Leader            //#role
+	Knows             //#role
+)
+
+type Message struct {
+	Type  MsgType // Wake, Bit, Verify, Result, Count, Size //#msg
+	Phase int     // numer fazy (ponowienia)                //#msgph
+	Round int     // runda selekcji — do logów               //#msg
+	B     int     // Bit: wylosowany bit                    //#msg
+	D, K  int     // Verify/Result: dystans, kandydaci       //#msgdk
+	U     bool    // Result: czy kandydat był jedyny         //#msgdk
+	J     int     // Count: licznik, Size: n                 //#msg
+}
+
+</script>
+
+<script type="text/x-go" id="code-state2">
+// Stan jednego procesora — wszystko, co pamięta gorutyna
+type NodeState struct {
+	ID         int  // tylko do logów — algorytm go NIE używa //#id
+	Phase      int  // bieżąca faza                          //#ph
+	Role       Role                                          //#role2
+	Round      int  // lokalna runda selekcji 1..c           //#sel
+	MyBit      int  // bit wylosowany w tej rundzie          //#sel
+	IsCand     bool // przetrwał c rund                      //#ver
+	ResultSeen bool // zna już werdykt „jedyny”               //#ver
+	KnownN     int  // wynik b_v = n                         //#fin
+	Halted     bool // terminacja procesora                  //#fin
+	rng        *rand.Rand                                    //#rng
+}
+
+type Config struct{ N, C int } // znane N, liczba rund c    //#cfg
+</script>
+
+<script type="text/x-go" id="code-handle">
+func (s *NodeState) HandleMessage(m Message,
+	cfg Config) (out []Message) {
+	send := func(x Message) { out = append(out, x) }
+	if s.Halted || (m.Type == Wake && s.Role != Sleep) {
+		return // po zakończeniu / spóźniony wake-up
+	}
+	// budzę się / nowa faza
+	if s.Role == Sleep || m.Phase > s.Phase {
+		s.Phase, s.Role, s.Round = m.Phase, Active, 1
+		s.IsCand, s.ResultSeen = false, false
+		s.MyBit = s.rng.Intn(2)
+		send(Message{Type: Bit, Phase: s.Phase,
+			Round: 1, B: s.MyBit})
+	}
+	if m.Type == Wake || m.Phase < s.Phase {
+		return // sam wake-up / wiadomość przeterminowana
+	}
+	switch m.Type {
+</script>
+
+<script type="text/x-go" id="code-bit">
+	case Bit:
+		if s.Role != Active {
+			send(m) // pasywny tylko przekazuje
+		} else if s.MyBit == 0 && m.B == 1 {
+			s.Role = Passive // „0 po 1”: odpadam
+		} else if s.Round < cfg.C {
+			s.Round++ // przeżyłem rundę → następna
+			s.MyBit = s.rng.Intn(2)
+			send(Message{Type: Bit, Phase: s.Phase,
+				Round: s.Round, B: s.MyBit})
+		} else {
+			s.Role, s.IsCand = Candidate, true // c rund
+			send(Message{Type: Verify, Phase: s.Phase,
+				D: 0, K: 1})
+		}
+</script>
+
+<script type="text/x-go" id="code-verify">
+	case Verify:
+		d, k := m.D+1, m.K
+		if s.IsCand {
+			k = min(k+1, 3) // mijam kandydata
+		}
+		if d < 2*cfg.N-1 {
+			send(Message{Type: Verify, Phase: s.Phase,
+				D: d, K: k})
+			return
+		}
+		// koniec trasy: ten węzeł zaczyna Result
+		// i sam stosuje werdykt
+		m = Message{Type: Result, Phase: s.Phase,
+			D: -1, U: k == 2} // po D++ będzie 0
+		fallthrough
+
+	case Result:
+		if m.D+1 < 2*cfg.N-1 { // też 2N−1 krawędzi
+			m.D++
+			send(m)
+		}
+</script>
+
+<script type="text/x-go" id="code-result">
+		if !m.U { // nie jedyny: ponów w fazie p+1
+			s.Phase, s.Role, s.Round = s.Phase+1, Active, 1
+			s.IsCand, s.ResultSeen = false, false
+			s.MyBit = s.rng.Intn(2)
+			send(Message{Type: Bit, Phase: s.Phase,
+				Round: 1, B: s.MyBit})
+		} else if !s.ResultSeen { // kolejne kopie pomijam
+			s.ResultSeen = true
+			if s.IsCand {
+				s.Role = Leader
+				send(Message{Type: Count,
+					Phase: s.Phase, J: 1})
+			} else {
+				s.Role = Knows
+			}
+		}
+</script>
+
+<script type="text/x-go" id="code-count">
+	case Count:
+		if s.Role == Leader {
+			s.KnownN = m.J // wróciło: n = J
+			send(Message{Type: Size,
+				Phase: s.Phase, J: m.J})
+		} else {
+			m.J++
+			send(m)
+		}
+
+	case Size:
+		if s.Role != Leader {
+			s.KnownN = m.J
+			send(m)
+		}
+		s.Halted = true // terminacja
+	}
+	return
+}
+</script>
+
+<script type="text/x-go" id="code-main">
+func node(s *NodeState, cfg Config,
+	in <-chan Message, out chan<- []Message) {
+	for m := range in { // jedna gorutyna = jeden węzeł //#gor
+		out <- s.HandleMessage(m, cfg)                  //#gor
+		if s.Halted {
+			return // procesor zakończył działanie
+		}
+	}
+}
+
+// main: bufory FIFO krawędzi + losowy harmonogram
+for {
+	i, ok := pickNonEmpty(queues, rng) // losowa krawędź //#pick
+	if !ok {
+		break // wszystkie bufory puste → koniec
+	}
+	m := queues[i][0]                                    //#pop
+	queues[i] = queues[i][1:]                            //#pop
+	inbox[i] <- m                // kanał bez bufora      //#deliver
+	for _, x := range <-outbox[i] {                      //#out
+		j := (i + 1) % n                                 //#out
+		queues[j] = append(queues[j], x)                 //#out
+		log.Printf("v%d wysłał %v do v%d", i, x, j)      //#log
+		stats.Count(x)                                   //#log
+	}
+	time.Sleep(Delay) // globalne opóźnienie
+}
+</script>
+
+<script>
+/* =====================================================================
+   KONFIGURACJA
+   ===================================================================== */
+const ANIM_TEMPO = 0.55;               // tempo animacji: mniej = wolniej (1 = poprzednie tempo)
+const AUTHOR = "Stanisław Macura";
+const FOOT_MID = "Itai & Rodeh (1990) — §4.3.2";
+const FOOT_DATE = "5 XI 2026";
+
+/* ===================================================================== */
+const $=id=>document.getElementById(id);
+const slides=[...document.querySelectorAll('.slide')];
+let cur=0, animToken=0, speed=1, auto=false, paused=false;
+const NS='http://www.w3.org/2000/svg';
+function S(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
+function T(parent,x,y,txt,attrs={}){const t=S('text',Object.assign({x,y,'text-anchor':'middle'},attrs),parent);t.textContent=txt;return t}
+const CV=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------- czas z anulowaniem i pauzą ---------- */
+class Cancel{}
+function alive(tok){if(tok!==animToken)throw new Cancel()}
+let instantTok=-1;
+function sleep(ms,tok){if(tok===instantTok)return Promise.resolve();return new Promise((res,rej)=>{let left=ms/(speed*ANIM_TEMPO);let last=performance.now();
+  function tick(){if(tok!==animToken)return rej(new Cancel());const now=performance.now();if(!paused)left-=(now-last);last=now;if(left<=0)res();else setTimeout(tick,Math.min(40,left))}tick()})}
+function tween(ms,tok,fn){if(tok===instantTok){fn(1);return Promise.resolve()}return new Promise((res,rej)=>{let el=0,last=performance.now();const dur=ms/(speed*ANIM_TEMPO);
+  function f(now){if(tok!==animToken)return rej(new Cancel());if(!paused)el+=now-last;last=now;const p=Math.min(1,el/dur);fn(p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2);p<1?requestAnimationFrame(f):res()}requestAnimationFrame(f)})}
+
+/* ---------- skalowanie ---------- */
+function fit(){const s=Math.min(innerWidth/1280,innerHeight/720);$('deck').style.transform=`scale(${s})`}
+addEventListener('resize',fit);fit();
+
+/* ---------- stopki ---------- */
+slides.forEach((s,i)=>{if(s.classList.contains('title-slide'))return;const f=document.createElement('div');f.className='foot';
+  f.innerHTML=`<div class="f1">${AUTHOR}</div><div class="f2">${FOOT_MID}</div><div class="f3"><span>${FOOT_DATE}</span><span>${i+1} / ${slides.length}</span></div>`;s.appendChild(f)});
+$('authorName').textContent=AUTHOR;
+
+/* ---------- podświetlanie Go ---------- */
+const KW=new Set('func type struct const iota return if else for range switch case go chan var map break continue default fallthrough'.split(' '));
+const TY=new Set('int bool string Message NodeState Role Config MsgType Rand'.split(' '));
+function hiGo(line){const re=/(\/\/.*$)|("(?:[^"\\]|\\.)*")|(\b\d+\b)|([A-Za-z_]\w*)|([^A-Za-z_\d"\/]+|\/)/g;let out='',m;
+  const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  while((m=re.exec(line))){if(m[1])out+=`<span class="cm">${esc(m[1])}</span>`;else if(m[2])out+=`<span class="st2">${esc(m[2])}</span>`;else if(m[3])out+=`<span class="nu">${m[3]}</span>`;else if(m[4])out+=KW.has(m[4])?`<span class="kw">${m[4]}</span>`:TY.has(m[4])?`<span class="ty">${m[4]}</span>`:m[4];else out+=esc(m[5])}return out}
+document.querySelectorAll('pre.code[data-code]').forEach(pre=>{
+  let src=$(pre.dataset.code).textContent.replace(/^\n/,'').replace(/\n\s*$/,'');
+  const lines=src.split('\n');
+  pre.innerHTML=lines.map(l=>{let tags='';const mm=l.match(/\s*\/\/#([\w,]+)\s*$/);if(mm){tags=mm[1].replace(/,/g,' ');l=l.slice(0,mm.index)}
+    return `<span class="ln" data-t="${tags}">${hiGo(l)||' '}</span>`}).join('');
+});
+function hl(pre,tags,dimOthers=false){pre.querySelectorAll('.ln').forEach(l=>{const t=l.dataset.t.split(' ');const on=tags.some(x=>t.includes(x));l.classList.toggle('hl',on);l.classList.toggle('dim',dimOthers&&tags.length>0&&!on)})}
+
+/* ---------- nawigacja ---------- */
+const STATIC={};
+STATIC.twins=()=>{
+  const cols=[CV('--act'),CV('--cand'),CV('--ok')],labels=['a','b','c',"a′","b′","c′"];
+  const draw=(id,n,cx,R,cap)=>{const svg=$(id);const ring=new Ring(svg,{n,cx,cy:150,R,nr:26,fs:20});
+    for(let i=0;i<n;i++){ring.style(i,{fill:cols[i%3]});ring.nodes[i].t.textContent=labels[i]}
+    T(svg,cx,322,cap,{'font-size':22,fill:'#333'})};
+  draw('twR',3,115,78,'R, m = 3');draw('twR2',6,170,118,'R′, 2m = 6');
+};
+STATIC.flow=()=>{
+  const svg=$('flowSvg');svg.innerHTML='';const defs=S('defs',{},svg);
+  const C={bit:CV('--mBIT'),ver:CV('--mVER'),res:CV('--mRES'),cnt:CV('--mCNT'),no:CV('--red')};
+  for(const k in C){const m=S('marker',{id:'fl_'+k,viewBox:'0 0 10 10',refX:8,refY:5,markerWidth:4,markerHeight:4,orient:'auto'},defs);S('path',{d:'M0,0L10,5L0,10z',fill:C[k]},m)}
+  const arrow=(pts,k)=>S('polyline',{points:pts,fill:'none',stroke:C[k],'stroke-width':5,'stroke-linejoin':'round','marker-end':`url(#fl_${k})`},svg);
+  const txt=(x,y,html,attrs)=>{const t=T(svg,x,y,'',attrs);t.innerHTML=html;return t};
+  const mt=s=>`<tspan class="mt">${s}</tspan>`;
+  const box=(x,y,w,h,k,num,head,sub,msg)=>{const cx=x+w/2;let yy=y+(num?88:50);
+    S('rect',{x,y,width:w,height:h,rx:10,fill:'#fff',stroke:C[k],'stroke-width':4},svg);
+    if(num){S('circle',{cx,cy:y+34,r:21,fill:C[k]},svg);T(svg,cx,y+43,num,{'font-size':25,'font-weight':700,fill:'#fff'})}
+    txt(cx,yy,head,{'font-size':27,'font-weight':700,fill:C[k]});
+    txt(cx,yy+44,sub,{'font-size':24,fill:'#222'});
+    if(msg)T(svg,cx,yy+88,msg,{'font-size':24,'font-weight':700,fill:C[k],style:'font-family:LMM,monospace'})};
+  const top=30,h=215,cy=top+h/2,low=385;
+  box(14,top,220,h,'bit','1','Selekcja',mt('c')+' rund','BIT');
+  arrow(`234,${cy} 280,${cy}`,'bit');
+  box(284,top,220,h,'ver','2','Weryfikacja','licznik '+mt('2N−1'),'VERIFY');
+  arrow(`504,${cy} 540,${cy}`,'ver');
+  S('polygon',{points:`544,${cy} 640,${cy-108} 736,${cy} 640,${cy+108}`,fill:'#fff',stroke:'#333','stroke-width':4},svg);
+  txt(640,cy+4,mt('k = 2')+' ?',{'font-size':31,fill:'#111'});
+  T(svg,640,cy+36,'jedyny?',{'font-size':21,fill:'#555'});
+  arrow(`736,${cy} 792,${cy}`,'res');T(svg,764,cy-16,'tak',{'font-size':27,'font-weight':700,fill:C.res});
+  box(796,top,200,h,'res','3','Powiadomienie','„jedyny”','RESULT');
+  arrow(`996,${cy} 1032,${cy}`,'cnt');
+  box(1036,top,196,h,'cnt','4','Liczenie '+mt('n'),'w koło','COUNT, SIZE');
+  arrow(`1134,${top+h} 1134,${low-4}`,'cnt');
+  box(1036,low,196,120,'cnt','','koniec','każdy zna '+mt('n'),'');
+  arrow(`640,${cy+108} 640,${low-4}`,'no');T(svg,676,(cy+108+low)/2+9,'nie',{'font-size':27,'font-weight':700,fill:C.no});
+  box(530,low,220,170,'no','','Powiadomienie','„nie jedyny”','RESULT');
+  arrow(`530,${low+85} 124,${low+85} 124,${top+h+4}`,'no');
+  txt(327,low+70,'kolejna faza '+mt('p+1'),{'font-size':31,'font-weight':700,fill:C.no});
+};
+function show(i){
+  i=Math.max(0,Math.min(slides.length-1,i));
+  slides[cur].classList.remove('on');cur=i;slides[cur].classList.add('on');
+  history.replaceState(null,'','#'+(cur+1));
+  run();
+}
+/* stan animacji slajdu: none | ready (czeka na kliknięcie) | running | done */
+let animState='none',gateRes=null,autoStart=false;
+function setHint(on){$('hint').style.display=on?'block':'none'}
+/* animacja rysuje stan początkowy, a potem czeka tutaj na kliknięcie */
+function gate(tok){
+  if(tok===instantTok)return Promise.resolve();
+  if(auto||autoStart){animState='running';return Promise.resolve()}
+  return new Promise(res=>{animState='ready';setHint(true);gateRes=()=>{if(tok!==animToken)return;gateRes=null;animState='running';setHint(false);updHud();res()}});
+}
+function startAnim(){if(animState==='ready'&&gateRes)gateRes()}
+async function run(start=false){
+  const tok=++animToken;paused=false;autoStart=start;gateRes=null;setHint(false);
+  const s=slides[cur];const name=s.dataset.anim;
+  const st=s.dataset.static;
+  if(st){try{if(STATIC[st])STATIC[st](s);else if(ANIM[st]){instantTok=tok;await ANIM[st](s,tok)}}catch(e){if(!(e instanceof Cancel))console.error(e)}}
+  animState=name&&ANIM[name]?'running':'none';updHud();
+  try{if(animState!=='none'){await ANIM[name](s,tok);if(tok===animToken){animState='done';updHud()}}
+    if(auto){await sleep((+(s.dataset.dwell||6))*1000,tok);if(cur<slides.length-1)show(cur+1);else{auto=false;updHud()}}
+  }catch(e){if(!(e instanceof Cancel))console.error(e)}
+}
+function updHud(){$('hud').textContent=`${auto?'AUTO ▶  ':''}${paused?'PAUZA  ':''}${speed!==1?speed+'×  ':''}H — pomoc`}
+/* klik myszą na slajdzie: start / pauza / powtórka animacji */
+$('deck').addEventListener('click',()=>{if(animState==='ready')startAnim();else if(animState==='running'){paused=!paused;updHud()}else if(animState==='done')run(true)});
+/* „dalej” (→, spacja, pilot): najpierw uruchamia czekającą animację, potem przechodzi dalej */
+function next(){if(animState==='ready'&&!auto)startAnim();else show(cur+1)}
+addEventListener('keydown',e=>{
+  const k=e.key;
+  if(['ArrowRight',' ','PageDown','Enter'].includes(k)){e.preventDefault();next()}
+  else if(['ArrowLeft','PageUp','Backspace'].includes(k)){e.preventDefault();show(cur-1)}
+  else if(k==='Home')show(0);else if(k==='End')show(slides.length-1);
+  else if(k==='r'||k==='R')run(true);
+  else if(k==='a'||k==='A'){auto=!auto;run(auto)}
+  else if(k==='p'||k==='P'){paused=!paused;updHud()}
+  else if(k==='+'||k==='='){speed=Math.min(8,+(speed*1.5).toFixed(2));updHud()}
+  else if(k==='-'||k==='_'){speed=Math.max(.25,+(speed/1.5).toFixed(2));updHud()}
+  else if(k==='0'){speed=1;updHud()}
+  else if(k==='f'||k==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+  else if(k==='h'||k==='H'||k==='?'){const h=$('help');h.style.display=h.style.display==='flex'?'none':'flex'}
+  else if(k==='Escape'){$('help').style.display='none'}
+});
+
+/* =====================================================================
+   SYMULATOR (ten sam algorytm co w kodzie Go)
+   ===================================================================== */
+function fmtMsg(m){switch(m.t){case'WAKE':return'WAKE';case'BIT':return`BIT(ph=${m.ph}, r=${m.r}, b=${m.b})`;case'VERIFY':return`VERIFY(ph=${m.ph}, d=${m.d}, k=${m.k})`;case'RESULT':return`RESULT(ph=${m.ph}, d=${m.d}, ${m.u?'jedyny':'nie jedyny'})`;case'COUNT':return`COUNT(j=${m.j})`;case'SIZE':return`SIZE(n=${m.j})`}}
+function fmtGo(m){switch(m.t){case'BIT':return`Bit{ph:${m.ph} r:${m.r} b:${m.b}}`;case'VERIFY':return`Verify{ph:${m.ph} d:${m.d} k:${m.k}}`;case'RESULT':return`Result{ph:${m.ph} d:${m.d} u:${m.u}}`;case'COUNT':return`Count{j:${m.j}}`;case'SIZE':return`Size{j:${m.j}}`;default:return m.t}}
+function makeSim({n,N,c,seed,wake,sched,emit}){
+  const rnd=mulberry32(seed>>>0),L=2*N-1,LB=Math.ceil(Math.log2(2*N));
+  const nodes=[...Array(n)].map((_,i)=>({id:i,role:'SLEEP',ph:0,round:0,bit:null,isCand:false,resultSeen:false,knownN:null,done:false}));
+  const q=[...Array(n)].map(()=>[]);
+  const S={steps:0,msgs:{BIT:0,VERIFY:0,RESULT:0,COUNT:0,SIZE:0},bits:0,phases:1,mismatch:0,dropped:0,finished:false,sent:[],lastEdge:null,lastMsg:null};
+  const E=x=>{if(emit)emit(x)};
+  let wk=[];if(wake==='all')wk=[...Array(n).keys()];else if(wake==='one')wk=[Math.floor(rnd()*n)];else{for(let i=0;i<n;i++)if(rnd()<.35)wk.push(i);if(!wk.length)wk=[Math.floor(rnd()*n)]}
+  wk.forEach(i=>q[i].push({t:'WAKE'}));
+  function send(v,m){const to=(v.id+1)%n;q[to].push(m);S.msgs[m.t]++;S.bits+=m.t==='BIT'?1:m.t==='VERIFY'?LB+2:m.t==='RESULT'?LB+1:LB;S.sent.push({from:v.id,to,m});E({k:'send',from:v.id,to,m})}
+  const coin=()=>rnd()<.5?0:1;
+  function startPhase(v,p){v.ph=p;v.role='ACTIVE';v.round=1;v.isCand=false;v.resultSeen=false;v.bit=coin();if(p+1>S.phases){S.phases=p+1;E({k:'note',s:`--- faza ${p} rozpoczęta (ponowienie) ---`,w:1})}send(v,{t:'BIT',ph:p,r:1,b:v.bit})}
+  function applyResult(v,u){if(!u)startPhase(v,v.ph+1);else if(!v.resultSeen){v.resultSeen=true;if(v.isCand){v.role='LEADER';E({k:'note',s:`v${v.id} zostaje LIDEREM`,w:1});send(v,{t:'COUNT',j:1})}else v.role='KNOWS'}}
+  function handle(v,m){
+    if(v.done)return;
+    if(v.role==='SLEEP'){E({k:'note',s:`v${v.id} budzi się`});startPhase(v,m.ph??0);if(m.t==='WAKE')return}
+    else if(m.t==='WAKE')return;
+    if(m.ph!==undefined){if(m.ph<v.ph){S.dropped++;E({k:'note',s:`v${v.id} odrzuca przeterminowaną ${fmtMsg(m)}`});return}if(m.ph>v.ph){E({k:'note',s:`v${v.id} widzi fazę ${m.ph} → restart`});startPhase(v,m.ph)}}
+    switch(m.t){
+      case'BIT':if(v.role==='ACTIVE'){if(m.r!==v.round)S.mismatch++;
+          if(v.bit===0&&m.b===1){v.role='PASSIVE';E({k:'note',s:`v${v.id} → pasywny (0 po 1)`})}
+          else if(v.round<c){v.round++;v.bit=coin();send(v,{t:'BIT',ph:v.ph,r:v.round,b:v.bit})}
+          else{v.role='CANDIDATE';v.isCand=true;E({k:'note',s:`v${v.id} → KANDYDAT`,w:1});send(v,{t:'VERIFY',ph:v.ph,d:0,k:1})}}
+        else send(v,m);break;
+      case'VERIFY':{const d=m.d+1,k=Math.min(3,m.k+(v.isCand?1:0));
+        if(d===L){const u=k===2;E({k:'note',s:`v${v.id}: koniec trasy, k=${k} → ${u?'jedyny':'NIE jedyny'}`,w:1});send(v,{t:'RESULT',ph:v.ph,d:0,u});applyResult(v,u)}
+        else send(v,{t:'VERIFY',ph:v.ph,d,k});break}
+      case'RESULT':{const d=m.d+1;if(d<L)send(v,{t:'RESULT',ph:m.ph,d,u:m.u});applyResult(v,m.u);break}
+      case'COUNT':if(v.role==='LEADER'){v.knownN=m.j;E({k:'note',s:`v${v.id} (lider) ustala n = ${m.j}`,w:1});send(v,{t:'SIZE',j:m.j})}else send(v,{t:'COUNT',j:m.j+1});break;
+      case'SIZE':if(v.role==='LEADER'){v.done=true;E({k:'note',s:`v${v.id} (lider) kończy`})}else{v.knownN=m.j;send(v,{t:'SIZE',j:m.j});v.done=true}break;
+    }
+  }
+  let sweep=0;
+  function step(){const ne=[];for(let i=0;i<n;i++)if(q[i].length)ne.push(i);if(!ne.length){S.finished=true;return false}
+    let i;if(sched==='sweep'){for(let k=0;k<n;k++){const j=(sweep+k)%n;if(q[j].length){i=j;break}}sweep=(i+1)%n}else i=ne[Math.floor(rnd()*ne.length)];
+    const m=q[i].shift();S.steps++;S.lastEdge=i;S.lastMsg=m;S.sent=[];handle(nodes[i],m);return true}
+  return {nodes,q,S,step,n,N,c,L};
+}
+
+/* =====================================================================
+   WIDOK PIERŚCIENIA
+   ===================================================================== */
+const MCOL={WAKE:'--mWAKE',BIT:'--mBIT',VERIFY:'--mVER',RESULT:'--mRES',COUNT:'--mCNT',SIZE:'--mCNT'};
+const mcol=t=>CV(MCOL[t]);
+class Ring{
+  constructor(svg,{n,cx,cy,R,nr=22,sub=true,badges=true,fs=15,below=false}){
+    this.below=below;this.svg=svg;this.n=n;this.cx=cx;this.cy=cy;this.R=R;this.nr=nr;svg.innerHTML='';
+    const defs=S('defs',{},svg);const mk=S('marker',{id:svg.id+'_ar',viewBox:'0 0 10 10',refX:8,refY:5,markerWidth:5,markerHeight:5,orient:'auto'},defs);S('path',{d:'M0,0L10,5L0,10z',fill:'#888'},mk);
+    this.gE=S('g',{},svg);this.gT=S('g',{},svg);this.gB=S('g',{},svg);this.gN=S('g',{},svg);this.gF=S('g',{},svg);
+    this.edges=[];this.nodes=[];this.badges=[];
+    for(let i=0;i<n;i++){const p=this.pos(i),q=this.pos((i+1)%n);const dx=q[0]-p[0],dy=q[1]-p[1],L=Math.hypot(dx,dy),s=(nr+3)/L;
+      this.edges.push(S('line',{x1:p[0]+dx*s,y1:p[1]+dy*s,x2:q[0]-dx*s*1.25,y2:q[1]-dy*s*1.25,stroke:'#999','stroke-width':1.6,'marker-end':`url(#${svg.id}_ar)`},this.gE))}
+    for(let j=0;j<n;j++){const b=this.bpos(j);const g=S('g',{opacity:0},this.gB);S('circle',{cx:b[0],cy:b[1],r:12,fill:'#fff',stroke:'#999','stroke-width':2.5},g);const t=T(g,b[0],b[1]+5,'',{'font-size':14});this.badges.push({g,c:g.firstChild,t})}
+    for(let i=0;i<n;i++){const p=this.pos(i);const g=S('g',{},this.gN);
+      const c=S('circle',{cx:p[0],cy:p[1],r:nr,fill:CV('--sleep'),stroke:'#666','stroke-width':1.5,class:'node'},g);
+      const t=T(g,p[0],p[1]+fs*.35,'v'+i,{'font-size':fs,'font-weight':700,fill:'#fff'});
+      const a=this.ang(i);const st=below?T(g,p[0],p[1]+nr+17,'',{'font-size':fs-1,fill:'#333',stroke:'#fff','stroke-width':5,'paint-order':'stroke','stroke-linejoin':'round'}):T(g,cx+(R+nr+22)*Math.cos(a),cy+(R+nr+22)*Math.sin(a)+5,'',{'font-size':fs-1,fill:'#333'});
+      this.nodes.push({g,c,t,st})}
+  }
+  ang(i){return -Math.PI/2+2*Math.PI*i/this.n}
+  pos(i,r){r=r??this.R;const a=this.ang(i);return[this.cx+r*Math.cos(a),this.cy+r*Math.sin(a)]}
+  bpos(j){const p=this.pos((j-1+this.n)%this.n),q=this.pos(j);const mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2;const ox=(mx-this.cx),oy=(my-this.cy),l=Math.hypot(ox,oy)||1;return[mx+ox/l*20,my+oy/l*20]}
+  style(i,{fill,stroke='#555',sw=1.5,txt='#fff',sub=''}){const N=this.nodes[i];N.c.setAttribute('fill',fill);N.c.setAttribute('stroke',stroke);N.c.setAttribute('stroke-width',sw);N.t.setAttribute('fill',txt);N.st.textContent=sub}
+  fromSim(i,v){
+    const st={SLEEP:{fill:CV('--sleep'),sub:'zzz'},ACTIVE:{fill:CV('--act'),sub:`r${v.round} b=${v.bit}`},PASSIVE:{fill:'#fff',stroke:'#888',sw:2,txt:'#333',sub:''},CANDIDATE:{fill:CV('--cand'),sub:'kandydat'},LEADER:{fill:CV('--lead'),sub:'LIDER'},KNOWS:{fill:'#fff',stroke:CV('--ok'),sw:4,txt:'#333',sub:'zna werdykt'}}[v.role];
+    const s=Object.assign({},st);if(v.done)s.sub=(v.role==='LEADER'?'LIDER ':'')+`✓ n=${v.knownN}`;if(v.ph>0&&!v.done&&v.role!=='SLEEP')s.sub=`f${v.ph} `+s.sub;this.style(i,s)}
+  badge(j,list){const B=this.badges[j];if(!list.length){B.g.setAttribute('opacity',0);return}B.g.setAttribute('opacity',1);B.c.setAttribute('stroke',mcol(list[0].t));B.t.textContent=list.length}
+  hotEdge(j){this.edges.forEach((e,i)=>{const on=j!==null&&(i+1)%this.n===j;e.setAttribute('stroke',on?CV('--blue'):'#999');e.setAttribute('stroke-width',on?3.5:1.6)})}
+  async fly(p0,p1,color,tok,ms,label){const g=S('g',{},this.gF);const c=S('circle',{cx:p0[0],cy:p0[1],r:8,fill:color,stroke:'#fff','stroke-width':2},g);let t=null;if(label){t=T(g,p0[0],p0[1]-12,label,{'font-size':13,fill:color,'font-weight':700})}
+    try{await tween(ms,tok,p=>{const x=p0[0]+(p1[0]-p0[0])*p,y=p0[1]+(p1[1]-p0[1])*p;c.setAttribute('cx',x);c.setAttribute('cy',y);if(t){t.setAttribute('x',x);t.setAttribute('y',y-12)}})}finally{g.remove()}}
+  async pulse(i,tok){const p=this.pos(i);const c=S('circle',{cx:p[0],cy:p[1],r:this.nr,fill:'none',stroke:CV('--blue'),'stroke-width':3},this.gF);try{await tween(380,tok,x=>{c.setAttribute('r',this.nr+x*14);c.setAttribute('opacity',1-x)})}finally{c.remove()}}
+}
+/* jeden krok symulacji z animacją */
+async function animStep(ring,sim,tok,ms){
+  const qb=sim.q.map(b=>b.slice());
+  if(!sim.step())return false;
+  const i=sim.S.lastEdge,m=sim.S.lastMsg;
+  ring.hotEdge(i);ring.badge(i,qb[i].slice(1));
+  await ring.fly(ring.bpos(i),ring.pos(i),mcol(m.t),tok,ms*.42,m.t==='BIT'?String(m.b):m.t==='WAKE'?'W':m.t[0]);
+  sim.nodes.forEach((v,k)=>ring.fromSim(k,v));
+  const sent=sim.S.sent.slice();
+  if(sent.length){await Promise.all(sent.map((s,idx)=>sleep(idx*90,tok).then(()=>ring.fly(ring.pos(i),ring.bpos((i+1)%sim.n),mcol(s.m.t),tok,ms*.38,s.m.t==='BIT'?String(s.m.b):s.m.t[0]))))}
+  sim.q.forEach((b,j)=>ring.badge(j,b));
+  return true;
+}
+
+/* =====================================================================
+   ANIMACJE SLAJDÓW
+   ===================================================================== */
+const ANIM={};
+
+/* --- selekcja w ujęciu rundowym --- */
+ANIM.selection=async(s,tok)=>{
+  const svg=$('selSvg');svg.innerHTML='';const n=10,cx=320,cy=215,R=165;const pos=(i,r=R)=>{const a=-Math.PI/2+2*Math.PI*i/n;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]};
+  const gA=S('g',{},svg),gN=S('g',{},svg);
+  S('circle',{cx,cy,r:R,fill:'none',stroke:'#ddd','stroke-width':1.5},gA);
+  const cs=[],ts=[],bs=[];for(let i=0;i<n;i++){const p=pos(i);cs.push(S('circle',{cx:p[0],cy:p[1],r:23,fill:CV('--act'),stroke:'#fff','stroke-width':2,class:'node'},gN));ts.push(T(gN,p[0],p[1]+5,'v'+i,{'font-size':14,fill:'#fff','font-weight':700}));const q=pos(i,R+44);bs.push(T(gN,q[0],q[1]+9,'',{'font-size':26,'font-weight':700,fill:CV('--blue'),class:'mt'}))}
+  const head=T(svg,cx,cy-6,'',{'font-size':22,'font-weight':700});const sub=T(svg,cx,cy+22,'',{'font-size':17,fill:'#555'});
+  let seed=1;for(;;seed++){const r=mulberry32(seed);let act=[...Array(n).keys()],k=0;while(act.length>1&&k<10){const b=act.map(()=>r()<.5?0:1);act=act.filter((_,j)=>!(b[j]===0&&b[(j-1+act.length)%act.length]===1));k++}if(act.length===1&&k>=4&&k<=6)break}
+  const r=mulberry32(seed);let act=[...Array(n).keys()],t=0;const cap=$('selCap');
+  head.textContent=`aktywnych: ${n}`;cap.innerHTML='Wszyscy aktywni (runda 1 startuje).';await gate(tok);
+  while(act.length>1){t++;
+    const b=act.map(()=>r()<.5?0:1);
+    head.textContent=`runda ${t}`;sub.textContent=`aktywnych: ${act.length}`;cap.innerHTML=`Runda ${t}: każdy aktywny rzuca monetą.`;
+    for(let j=0;j<act.length;j++){bs[act[j]].textContent=b[j];bs[act[j]].setAttribute('fill',b[j]?CV('--blue'):'#333')}
+    await sleep(1100,tok);
+    // łuki od każdego aktywnego do następnego aktywnego
+    cap.innerHTML=`Bity płyną do <b>następnego aktywnego</b> — łuki pokrywają pierścień: <b>${n} wiadomości</b>.`;
+    const arcs=[];
+    for(let j=0;j<act.length;j++){const a=act[j],bb=act[(j+1)%act.length];let span=(bb-a+n)%n;if(span===0)span=n;
+      const a1=-Math.PI/2+2*Math.PI*a/n+.16,a2=-Math.PI/2+2*Math.PI*(a+span)/n-.16,rr=R-40;
+      const d=`M${cx+rr*Math.cos(a1)},${cy+rr*Math.sin(a1)} A${rr},${rr} 0 ${span>n/2?1:0} 1 ${cx+rr*Math.cos(a2)},${cy+rr*Math.sin(a2)}`;
+      const p=S('path',{d,fill:'none',stroke:b[j]?CV('--blue'):'#666','stroke-width':4,'stroke-linecap':'round',opacity:.8},gA);const L=p.getTotalLength();p.setAttribute('stroke-dasharray',L);p.setAttribute('stroke-dashoffset',L);arcs.push([p,L])}
+    await tween(1100,tok,x=>arcs.forEach(([p,L])=>p.setAttribute('stroke-dashoffset',L*(1-x))));
+    await sleep(500,tok);
+    const out=act.filter((_,j)=>b[j]===0&&b[(j-1+act.length)%act.length]===1);
+    out.forEach(v=>{cs[v].setAttribute('fill',CV('--red'))});
+    cap.innerHTML=out.length?`„0 po 1”: odpadają <b>${out.map(v=>'v'+v).join(', ')}</b> (${out.length} z ${act.length}).`:`Nikt nie miał „0 po 1” — wszyscy zostają.`;
+    await sleep(1300,tok);
+    out.forEach(v=>{cs[v].setAttribute('fill','#fff');cs[v].setAttribute('stroke','#999');ts[v].setAttribute('fill','#888')});
+    arcs.forEach(([p])=>p.remove());act.forEach(v=>bs[v].textContent='');
+    act=act.filter(v=>!out.includes(v));sub.textContent=`aktywnych: ${act.length}`;await sleep(700,tok);
+  }
+  cs[act[0]].setAttribute('fill',CV('--cand'));head.textContent=`po ${t} rundach`;sub.textContent=`został 1 aktywny: v${act[0]}`;
+  cap.innerHTML=`Został <b>jeden</b> aktywny (zwykle po ≈ log<sub>4/3</sub> n rundach) — ale on sam <b>nie wie</b>, że jest jedyny ⇒ weryfikacja.`;
+};
+
+/* --- trasa 2N−1 na dwóch pierścieniach --- */
+async function routeAnim(svg,capEl,cands,tok,go,delay=0,n=7,N=5){
+  const R=130,cx=280,cy=205;const ring=new Ring(svg,{n,cx,cy,R,nr:22,fs:15,below:true});
+  for(let i=0;i<n;i++)ring.style(i,cands.includes(i)?{fill:CV('--cand'),sub:i===cands[0]?'nadawca X':'kandydat'}:{fill:'#fff',stroke:'#888',sw:2,txt:'#333',sub:''});
+  const L=2*N-1,src=cands[0];const gT=ring.gT;
+  const info=T(svg,cx,cy-6,'',{'font-size':22,'font-weight':700});const info2=T(svg,cx,cy+22,'',{'font-size':17,fill:'#555'});
+  info.textContent='d = 0, k = 1';info2.textContent=`trasa: ${L} krawędzi`;capEl.innerHTML=cands.length===1?'Jeden kandydat X.':'Dwóch kandydatów: X i Y.';
+  await go;await sleep(300+delay,tok);let k=1;
+  for(let d=1;d<=L;d++){const a=src+d-1,b=src+d;const lap=Math.floor((d-1)/n);const rr=R-40-lap*16;
+    const a1=-Math.PI/2+2*Math.PI*a/n,a2=-Math.PI/2+2*Math.PI*b/n;
+    const path=S('path',{d:`M${cx+rr*Math.cos(a1)},${cy+rr*Math.sin(a1)} A${rr},${rr} 0 0 1 ${cx+rr*Math.cos(a2)},${cy+rr*Math.sin(a2)}`,fill:'none',stroke:CV('--mVER'),'stroke-width':4,'stroke-linecap':'round'},gT);
+    const Lp=path.getTotalLength();path.setAttribute('stroke-dasharray',Lp);
+    await tween(420,tok,x=>path.setAttribute('stroke-dashoffset',Lp*(1-x)));
+    const v=b%n;if(cands.includes(v)){k++;ring.pulse(v,tok).catch(()=>{})}
+    info.textContent=`d = ${d}, k = ${Math.min(k,3)}${k>3?' (≥3)':''}`;
+    if(v===src)capEl.innerHTML=`d = ${d} = n: trasa <b>wraca do X</b> (jedyny raz).`;
+    await sleep(160,tok)}
+  const end=(src+L)%n;ring.style(end,{fill:CV('--lead'),sub:'koniec trasy'});
+  const verdict=k===2;info2.textContent=verdict?'k = 2 ⇒ „jedyny”':'k ≥ 3 ⇒ „nie jedyny”';info2.setAttribute('fill',verdict?CV('--ok'):CV('--red'));info2.setAttribute('font-weight',700);
+  capEl.innerHTML=`Węzeł v${end} (koniec trasy) wydaje werdykt: <b style="color:${verdict?CV('--ok'):CV('--red')}">${verdict?'kandydat był jedyny':'jest inny kandydat'}</b>.`;
+}
+ANIM.route=async(s,tok)=>{let goA,goB;const gA=new Promise(r=>goA=r),gB=new Promise(r=>goB=r);
+  const pa=routeAnim($('rtA'),$('rtAc'),[0],tok,gA,0),pb=routeAnim($('rtB'),$('rtBc'),[0,3],tok,gB,0);
+  await gate(tok);goA();await pa;await sleep(1500,tok);goB();await pb};
+
+/* --- DEMO --- */
+ANIM.demo=async(s,tok)=>{
+  const ring=new Ring($('demoSvg'),{n:6,cx:260,cy:205,R:160,nr:26,fs:16,below:true});
+  const log=$('demoLog');log.innerHTML='';const lines=[];
+  const push=(t,cls)=>{lines.push(cls?`<span class="${cls}">${t}</span>`:t);log.innerHTML=lines.slice(-25).join('\n')};
+  const sim=makeSim({n:6,N:4,c:3,seed:57,wake:'one',sched:'rand',emit:e=>{if(e.k==='send')push(`v${e.from} wysłał ${fmtGo(e.m)} do v${e.to}`);else if(e.k==='note')push(e.s,e.w?'w':'n')}});
+  sim.nodes.forEach((v,k)=>ring.fromSim(k,v));sim.q.forEach((b,j)=>ring.badge(j,b));
+  const stats=()=>{const M=sim.S.msgs;const tot=M.BIT+M.VERIFY+M.RESULT+M.COUNT+M.SIZE;$('demoStats').innerHTML=`<span>krok <b>${sim.S.steps}</b></span><span>faza <b>${sim.S.phases-1}</b></span><span>wiadomości <b>${tot}</b></span><span>BIT <b>${M.BIT}</b></span><span>VERIFY <b>${M.VERIFY}</b></span><span>RESULT <b>${M.RESULT}</b></span><span>COUNT+SIZE <b>${M.COUNT+M.SIZE}</b></span><span>bity <b>${sim.S.bits}</b></span>`};
+  push('$ go run . -n 6 -N 4 -c 3 -wake one','n');stats();await gate(tok);
+  while(await animStep(ring,sim,tok,520)){stats();await sleep(90,tok)}
+  ring.hotEdge(null);const M=sim.S.msgs;
+  push('=== PODSUMOWANIE ===','n');
+  push(`wiadomości: ${M.BIT+M.VERIFY+M.RESULT+M.COUNT+M.SIZE} (BIT ${M.BIT} = c·n·fazy = 3·6·${sim.S.phases}, VERIFY ${M.VERIFY}, RESULT ${M.RESULT}, COUNT ${M.COUNT}, SIZE ${M.SIZE})`);
+  push(`bity: ${sim.S.bits}, fazy: ${sim.S.phases}, odrzucone przeterminowane: ${sim.S.dropped}`);
+  const leader=sim.nodes.findIndex(v=>v.role==='LEADER');push(`lider: v${leader}, wszyscy znają n = ${sim.nodes.every(v=>v.knownN===6)?6:'?'} ✓`,'w');
+};
+
+/* ---------- start ---------- */
+const h=parseInt(location.hash.slice(1));show(isNaN(h)?0:h-1);
+</script>
+</body>
+</html>

@@ -1,0 +1,408 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[polish]{babel}
+\usepackage{lmodern}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs,tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+
+\setlist{itemsep=2pt,topsep=3pt}
+\captionsetup{font=small,labelfont=bf}
+
+\newtheorem{lemat}{Lemat}
+\newtheorem{twierdzenie}{Twierdzenie}
+\theoremstyle{definition}
+\newtheorem{niezm}{Niezmiennik}
+\renewcommand{\theniezm}{I\arabic{niezm}}
+
+\newcommand{\msg}[1]{\textsf{\small #1}}
+\newcommand{\fn}[1]{\texttt{#1}}
+\newcommand{\Ls}{2N{-}1}
+\makeatletter\newcommand{\rows}[1]{\@@input #1 }\makeatother
+
+\title{Asynchroniczny wybór lidera w~anonimowym pierścieniu\\przy przybliżonej znajomości $n$\\[4pt]
+\large Raport do prezentacji: Itai, Rodeh, \emph{Symmetry Breaking in Distributed Networks} (1990), §4.3.2}
+\author{Stanisław Macura}
+\date{listopad 2026}
+
+\begin{document}
+\maketitle
+
+\section*{0. Zakres i źródła}
+
+Sekcja §4.3.2 to w artykule jeden akapit: algorytm z §3.4, w którym licznik weryfikacji przechodzi
+$2N-1$ krawędzi, a procesor, na którym się zatrzyma, „powiadamia pozostałych”. Pozostałe elementy
+pochodzą z innych części artykułu: model (§3.1), selekcja (§3.4), ponawianie z numerami faz (Lemat 3.1),
+konieczność założenia $N\le n\le2N-1$ (Tw.\ 4.1) i liczenie $n$ przy znanym liderze (Lemat 4.1).
+
+Moją inwencją jest przede wszystkim część techniczna, której artykuł nie opisuje: mechanizm powiadomienia
+(\msg{RESULT} na kolejne $2N-1$ krawędzi) wraz z dowodem zgodności werdyktów, obsługa faz w asynchronii,
+terminacja przez \msg{COUNT}+\msg{SIZE}, wybór $c$ przy nieznanym $n$, uproszczony dowód złożoności
+oraz implementacja w Go.
+
+\section{Postawienie problemu}
+
+\paragraph{Wariant.} Rozważam dokładnie następujący model (artykuł §3.1):
+\begin{itemize}
+\item \textbf{pierścień jednokierunkowy} $v_0\to v_1\to\dots\to v_{n-1}\to v_0$; każda krawędź ma
+      \textbf{nieograniczony bufor FIFO}, kanały są niezawodne;
+\item \textbf{asynchroniczny}: brak wspólnego zegara; kolejność dostarczeń wyznacza \emph{harmonogram}
+      (adwersarz), w którym każda krawędź występuje nieskończenie często, więc każda wiadomość w~końcu dociera;
+\item \textbf{anonimowy}: wszystkie procesory wykonują ten sam program, nie mają identyfikatorów;
+      każdy ma \textbf{niezależne źródło losowości};
+\item \textbf{start}: dowolny niepusty zbiór procesorów dostaje wiadomość budzącą (wybiera adwersarz);
+      procesor śpiący budzi się na \emph{dowolną} wiadomość;
+\item \textbf{wiedza}: znane jest $N$ takie, że $N\le n\le 2N-1$; samo $n$ jest nieznane.
+\end{itemize}
+
+\paragraph{Cel.} Dokładnie jeden procesor zostaje \emph{liderem}, każdy procesor $v$ ma w rejestrze
+$b_v$ wartość $n$, a wszystkie procesory \textbf{same wiedzą}, że skończyły (terminacja procesorów, nie tylko
+ustanie komunikacji). Algorytm ma być \textbf{Las Vegas}: wynik zawsze poprawny, kończy się
+z~prawdopodobieństwem 1. Mierzymy oczekiwaną (po losowości) liczbę wiadomości i bitów w najgorszym
+przypadku po harmonogramach i zbiorach wake-upów.
+
+\paragraph{Dlaczego akurat $N\le n\le 2N-1$.} Tw.\ 4.1 artykułu: algorytm z terminacją procesorów,
+który nigdy się nie myli dla pierścienia rozmiaru $m$, musi się mylić dla rozmiaru $2m$. Dowód: sklejamy
+dwie kopie poprawnego wykonania na $m$ procesorach; „bliźniaki” dostają te same rzuty i ten sam
+harmonogram, więc kończą z $b_v=m$ i dwoma liderami. Przedział $[N,2N-1]$ jest \emph{największym}
+przedziałem postaci $[N,\cdot]$ bez pary $(m,2m)$ — dopuszczenie $n=2N$ już by ją wprowadziło.
+(Tw.\ 4.2 dodaje, że bez takiej wiedzy nie da się też mieć terminacji z ograniczonym błędem.)
+
+\paragraph{Co się psuje względem znanych wariantów.} W §3.4 (async, $n$ znane) kandydat wysyła licznik
+dookoła i rozpoznaje go po powrocie, bo licznik $=n$. Tu $n$ nie znamy, więc
+\textbf{procesor nie rozpozna własnej wiadomości}. W §4.3.1 (sync, przybliżone $n$) informację niesie
+\textbf{cisza} w ustalonym oknie czasu; w asynchronii cisza nic nie znaczy. Obie przeszkody trzeba
+obejść jednocześnie.
+
+\section{Idea algorytmu i niezmienniki}
+
+Algorytm działa w \emph{fazach} (ponowieniach) numerowanych $p=0,1,\dots$; każda faza ma cztery etapy.
+
+\begin{enumerate}[label=\textbf{\arabic*.}]
+\item \textbf{Selekcja} (§3.4, bez zmian). Każdy aktywny procesor w każdej z $c$ rund losuje bit,
+  wysyła go \msg{BIT} do następnego \emph{aktywnego} (pasywni tylko przekazują) i odbiera bit poprzedniego
+  aktywnego. Jeśli wylosował 0, a poprzednik 1 — staje się pasywny. Ocaleni po $c$ rundach to
+  \emph{kandydaci}; $c=\lceil2\log_{4/3}(2N)\rceil$.
+\item \textbf{Weryfikacja} (§4.3.2). Każdy kandydat wysyła \msg{VERIFY}$(d,k)$, gdzie $d$ to liczba
+  przebytych krawędzi, a $k$ liczba napotkanych kandydatów (start liczy się jako 1, obcinamy do 3).
+  Wiadomość zatrzymuje się po $2N-1$ krawędziach; procesor $E$, na którym stanęła, wie, czy
+  $k=2$ (kandydat jedyny), czy $k\ge3$.
+\item \textbf{Powiadomienie}. $E$ wysyła \msg{RESULT}$(u)$, $u=[k=2]$, na kolejne $2N-1$ krawędzi
+  i sam od razu stosuje werdykt. Artykuł mówi tylko „this processor notifies the others”.
+\item \textbf{Wynik.} Werdykt „nie jedyny” $\Rightarrow$ procesor przechodzi do fazy $p+1$ i zaczyna
+  selekcję od nowa (Lemat 3.1). Werdykt „jedyny” $\Rightarrow$ kandydat zostaje liderem i wysyła
+  \msg{COUNT}$(1)$; każdy inny zwiększa licznik i przekazuje; gdy licznik wraca do lidera, wynosi $n$
+  (Lemat 4.1). Lider rozsyła \msg{SIZE}$(n)$; każdy zapisuje $b_v=n$, przekazuje i kończy.
+\end{enumerate}
+
+\paragraph{Asynchronia.} (a) \emph{Start}: śpiący procesor budzi się na pierwszą otrzymaną wiadomość
+i wchodzi w rundę 1 — bity rundy 1 niosą pobudkę dookoła, więc w rundzie 1 aktywnych jest zawsze
+wszystkich $n$, niezależnie od zbioru wake-upów. (b) \emph{Rundy są lokalne}: różne procesory mogą być
+w różnych rundach; numer rundy nie musi być przesyłany, bo pilnuje go FIFO (\ref{n:fifo}).
+(c) \emph{Numery faz}: po ponowieniu w sieci krążą jeszcze \msg{VERIFY}/\msg{RESULT} starej fazy. Reguła:
+wiadomość z fazą mniejszą od mojej — odrzucam; z większą — „ktoś już wie, że trzeba zacząć od nowa”,
+restartuję się w tej fazie i przetwarzam wiadomość w nowym stanie.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.9,
+  nd/.style={circle,draw,thick,minimum size=5.5mm,inner sep=0,font=\scriptsize},
+  cand/.style={nd,fill=orange!35}]
+\foreach \shift/\two/\lab in {0/0/{(a) jeden kandydat $X$: $k=2$}, 7.2/1/{(b) kandydaci $X,Y$: $k=3$}} {
+  \begin{scope}[xshift=\shift cm]
+    \foreach \i in {0,...,6} {
+      \pgfmathsetmacro{\a}{90-\i*360/7}
+      \coordinate (p\i) at (\a:1.6);
+    }
+    \draw[gray!60] (0,0) circle (1.6);
+    % spirala: 9 krawędzi = 9/7 obrotu, promień rośnie
+    \draw[-{Stealth[length=2.5mm]},thick,blue!70!black,domain=0:9,samples=120,smooth]
+      plot ({90-\x*360/7}:{2.0+0.07*\x});
+    \foreach \i in {0,...,6} {\node[nd,fill=white] at (p\i) {$v_\i$};}
+    \node[cand] at (p0) {$X$};
+    \ifnum\two=1 \node[cand] at (p3) {$Y$}; \fi
+    \node[nd,fill=green!30] at (p2) {$E$};
+    \node[font=\small] at (0,-3.0) {\lab};
+  \end{scope}
+}
+\end{tikzpicture}
+\caption{$n=7$, $N=5$: trasa \msg{VERIFY} ma $2N-1=9$ krawędzi, kończy się w $E=v_2$. Trasa obejmuje
+odległość $n=7$ (powrót przez $X$), ale nie $2n=14$, więc mija $X$ dokładnie raz.}
+\label{fig:trasa}
+\end{figure}
+
+\begin{lemat}[trasa $2N-1$; fakt z §4.3]\label{lem:trasa}
+Jeśli $N\le n\le 2N-1$, to wiadomość wysłana z $X$ i przekazywana przez $2N-1$ krawędzi odwiedza każdy
+procesor, a przez $X$ przechodzi (nie licząc startu) dokładnie raz.
+\end{lemat}
+\begin{proof}
+Trasa mija odległości $1,\dots,2N-1$ od $X$; $X$ leży w odległościach podzielnych przez $n$.
+Z $n\le2N-1$ odległość $n$ jest na trasie (pełne okrążenie), a z $2n\ge 2N>2N-1$ odległość $2n$ nie jest.
+\end{proof}
+
+\noindent Wniosek: przy jednym kandydacie licznik końcowy to $k=2$ (start + powrót), przy $a\ge2$ kandydatach
+$k\ge3$ (start, inny kandydat, powrót). Tak należy czytać zdanie artykułu „passes through a leader at
+least three times” — „leader” oznacza tu kandydata, a start się wlicza.
+
+\paragraph{Niezmienniki.} W kodzie i dowodach utrzymywane są:
+\begin{niezm}[\,§3.4]\label{n:aktywny}
+W każdej fazie i rundzie jest $\ge1$ aktywny procesor; zatem po selekcji jest $a\ge1$ kandydatów.
+\end{niezm}
+\begin{niezm}[FIFO]\label{n:fifo}
+Aktywny procesor w fazie $p$ otrzymuje dokładnie jeden \msg{BIT} na rundę, w kolejności rund —
+$r$-ty odebrany bit to bit rundy $r$ poprzedniego aktywnego.
+\end{niezm}
+\begin{niezm}[koszt rundy]\label{n:runda}
+W każdej rundzie każdą krawędzią przechodzi dokładnie jeden \msg{BIT}; faza wysyła dokładnie $cn$ bitów selekcji.
+\end{niezm}
+\begin{niezm}[separacja faz]\label{n:separacja}
+Na każdej krawędzi wszystkie \msg{BIT} fazy $p$ poprzedzają \msg{VERIFY}/\msg{RESULT} fazy $p$, a te
+poprzedzają wiadomości fazy $p+1$. W szczególności gdy \msg{VERIFY} dociera do procesora, ten już wie,
+czy jest kandydatem.
+\end{niezm}
+\begin{niezm}[zgodność werdyktów]\label{n:werdykt}
+Wszystkie werdykty \msg{RESULT} jednej fazy są równe i prawdziwe.
+\end{niezm}
+
+\noindent\emph{Co utrzymujemy, co zmieniamy:} \ref{n:aktywny}–\ref{n:separacja} są utrzymywane cały czas;
+liczba aktywnych maleje w oczekiwaniu czynnikiem $\tfrac34$ na rundę; wiedza o wyniku rośnie:
+po weryfikacji zna go tylko $E$, po powiadomieniu — wszyscy.
+
+\section{Dowód poprawności}
+
+\paragraph{Krok 1 (\ref{n:aktywny}, \ref{n:fifo}, art.\ §3.4).} Odpaść może tylko procesor z 0, którego
+poprzedni aktywny wylosował 1 — a ten poprzednik w tej rundzie nie odpada. Jedyny aktywny dostaje własny
+bit, więc nie odpada. \ref{n:fifo} przez indukcję po rundach: pasywni przekazują bez zmian, FIFO zachowuje
+kolejność; gdy poprzednik $Q$ odpada w rundzie $s$, wysłał już bity $1..s$, a od tej chwili przekazuje
+bity $s{+}1,\dots$ swojego poprzednika. \ref{n:runda}: aktywni dzielą pierścień na odcinki, bit rundy
+przechodzi dokładnie swój odcinek. \emph{Ważne}: z~\ref{n:fifo} wynika, że \textbf{wynik selekcji zależy tylko od
+rzutów, nie od harmonogramu} — dlatego analiza probabilistyczna działa dla najgorszego harmonogramu.
+
+\paragraph{Krok 2 (\ref{n:separacja}).} Procesor wysyła \msg{VERIFY} fazy $p$ dopiero po wysłaniu
+wszystkich swoich bitów fazy $p$, a pasywni przekazują w kolejności przyjścia; z FIFO bity fazy $p$
+wyprzedzają na każdej krawędzi \msg{VERIFY}. Wiadomości fazy $p+1$ procesor wysyła dopiero po
+przetworzeniu \msg{RESULT}$(p)$ lub \msg{BIT}$(p{+}1)$, a w~\fn{HandleMessage} najpierw przekazuje
+\msg{RESULT}, potem wysyła nowy \msg{BIT} — kolejność na krawędzi się zachowuje.
+
+\begin{lemat}[zgodność werdyktów, \ref{n:werdykt}]\label{lem:zgodnosc}
+W fazie z $a$ kandydatami każdy werdykt jest „jedyny” wtedy i tylko wtedy, gdy $a=1$.
+\end{lemat}
+\begin{proof}
+Z~\ref{n:separacja} każdy procesor zna swój status, gdy liczy $k$. Dla $a=1$ jest jedna trasa i $k=2$
+(Lemat~\ref{lem:trasa}). Dla $a\ge2$ każda trasa obchodzi cały pierścień, więc mija innego kandydata
+oraz wraca przez nadawcę: $k\ge3$.
+\end{proof}
+
+\paragraph{Krok 3: każdy opuszcza nieudaną fazę.} Jeśli $a\ge2$, \msg{RESULT}(fałsz) z~$E$ ma pokryć
+$E$ i kolejne $2N-1\ge n-1$ procesorów, czyli wszystkich. Trasa może zostać ucięta tylko przez procesor,
+który już jest w fazie $p+1$ — ale on wysłał wtedy \msg{BIT}$(p{+}1)$, który restartuje następnika.
+Zatem każdy procesor przejdzie do fazy $p+1$ przez \msg{RESULT} albo przez \msg{BIT} nowej fazy.
+
+\begin{twierdzenie}[bezpieczeństwo — deterministyczne]
+W każdym wykonaniu (dla każdego harmonogramu i każdych rzutów) jest co najwyżej jeden lider, a jeśli
+algorytm się zakończy, to każdy $b_v=n$ i po zakończeniu w kanałach nie ma wiadomości.
+\end{twierdzenie}
+\begin{proof}[Szkic]
+Liderem zostaje tylko kandydat po werdykcie „jedyny”, więc z Lematu~\ref{lem:zgodnosc} w tej fazie
+$a=1$, a żaden werdykt nie jest „nie jedyny”. Wiadomość fazy $p+1$ może powstać tylko z \msg{RESULT}(fałsz)
+fazy $p$ lub z innej wiadomości fazy $p+1$ — indukcyjnie nie powstaje żadna, więc faza jest ostatnia
+i lider jest jeden. Trasa \msg{RESULT} pokrywa cały pierścień, a ewentualne powtórne kopie werdyktu (trasa
+$2N-1$ może dwukrotnie odwiedzić niektóre procesory, np.\ $E$) pomija flaga \fn{ResultSeen}.
+\msg{COUNT} startuje tylko lider i rośnie o 1 na krawędź, więc wraca z wartością $n$ (art.\ Lemat 4.1);
+\msg{SIZE} niesie ją do wszystkich. Pusty stan kanałów: procesor wysyła \msg{SIZE} jako ostatnią
+wiadomość i się zatrzymuje, a wszystko, co wcześniej przyszło na jego krawędź wejściową, wyprzedza
+\msg{SIZE} (FIFO); indukcyjnie po pierścieniu za \msg{SIZE} nic nie płynie. Lider zatrzymuje się
+ostatni, gdy \msg{SIZE} do niego wraca.
+\end{proof}
+
+\begin{twierdzenie}[żywotność]
+Faza kończy się sukcesem z prawdopodobieństwem $>1-1/n$, niezależnie od poprzednich faz; liczba faz $F$ ma
+rozkład geometryczny, algorytm kończy się z prawdopodobieństwem 1 i $\mathbb{E}[F]<\frac{1}{1-1/n}\le2$.
+\end{twierdzenie}
+\noindent Dowód — rachunek z sekcji~\ref{sec:zlozonosc}; struktura „faza udaje się z $p>0$ $\Rightarrow$
+ponowienia kończą się z prawd.~1” to Lemat 3.1 artykułu. Zauważmy: Tw.~4.1 nie jest naruszone, bo
+algorytm używa $N$, a w $[N,2N-1]$ nie ma pary $(m,2m)$.
+
+\paragraph{Mapa do artykułu.} Krok 1 $\leftrightarrow$ §3.4 (akapit pod opisem selekcji); Lemat~\ref{lem:trasa}
+$\leftrightarrow$ wstęp §4.3; Lemat~\ref{lem:zgodnosc} $\leftrightarrow$ nawias „at least three times”
+w §4.3.2; ponowienia $\leftrightarrow$ dowód Lematu 3.1; liczenie $n$ $\leftrightarrow$ Lemat 4.1;
+konieczność założenia $\leftrightarrow$ Tw.\ 4.1–4.2.
+
+\section{Złożoność}\label{sec:zlozonosc}
+
+\paragraph{Ile zostaje kandydatów.} Niech $m_t$ — liczba aktywnych po $t$ rundach ($m_0=n$),
+$Y_t=m_t-1\ge0$. Gdy $m\ge2$, poprzedni aktywny jest innym procesorem, więc każdy aktywny odpada
+z prawdopodobieństwem dokładnie $\frac14$: $\mathbb{E}[m_t\mid m_{t-1}=m]=\frac34m$, czyli
+$\mathbb{E}[Y_t\mid Y_{t-1}]\le\frac34Y_{t-1}$ (dla $m=1$: $Y$ zostaje 0). Stąd
+$\mathbb{E}[Y_c]\le(n-1)(\frac34)^c$ i z nierówności Markowa
+\[
+\Pr[a\ge2]=\Pr[Y_c\ge1]\le(n-1)\left(\tfrac34\right)^c .
+\]
+Artykuł dochodzi do tego samego rzędu przez pełny rozkład i wariancję (Lematy 3.2–3.3, analiza Hofriego,
+Czebyszew); powyższe trzy linijki wystarczają do tezy.
+
+\paragraph{Wybór $c$.} W §3.4 jest $c=5\log n$, ale $n$ jest nieznane — zastępuję je przez $2N>n$:
+$c=\lceil2\log_{4/3}(2N)\rceil$ daje $(\frac34)^c\le(2N)^{-2}<n^{-2}$, więc $\Pr[a\ge2]<1/n$ oraz
+$\mathbb{E}[a]\le1+\mathbb{E}[Y_c]<1+1/n$. Ponadto \textbf{$c$ nie może być zbyt małe}: odpadający
+procesor ma ocalałego poprzednika (z bitem 1), więc w rundzie odpada co najwyżej połowa aktywnych;
+przy $2^c<n$ zawsze zostaje $\ge2$ kandydatów i algorytm ponawia w nieskończoność. Program odrzuca takie $c$.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{lccc}
+\toprule
+etap & wiadomości na fazę & bitów na wiadomość & źródło kosztu \\
+\midrule
+1.\ selekcja & $cn$ (dokładnie, \ref{n:runda}) & $O(1)$ & art.\ §3.4 \\
+2.\ weryfikacja & $\le a(2N-1)$ & $O(\log N)$ & art.\ §4.3.2 \\
+3.\ powiadomienie & $\le a(2N-1)$ & $O(\log N)$ & własne \\
+4.\ liczenie $n$ (raz) & $2n$ & $O(\log n)$ & art.\ Lemat 4.1 + własne \\
+\bottomrule
+\end{tabular}
+\caption{Koszt jednej fazy; $a$ — liczba kandydatów. „$\le$”, bo w nieudanej fazie trasy mogą zostać ucięte.}
+\label{tab:koszt}
+\end{table}
+
+\paragraph{Suma.} Fazy są niezależne (świeże rzuty), więc z tożsamości Walda
+\[
+\mathbb{E}[\#\text{wiad.}]\le\mathbb{E}[F]\big(cn+2\,\mathbb{E}[a](2N-1)\big)+2n
+\le 2\big(cn+2(1+\tfrac1n)(2N-1)\big)+2n=O(n\log n),
+\]
+bo $c=O(\log N)=O(\log n)$ i $N\le n$. Bity: selekcja $cn\cdot O(1)$, reszta $O(n)$ wiadomości po
+$O(\log N)$ bitów, razem $O(n\log n)$ — tak jak w artykule. Numer fazy dokłada $O(\log F)$ bitów do
+wiadomości, a $\mathbb{E}[F\log F]=O(1)$, więc asymptotyka się nie zmienia.
+
+\paragraph{Uwagi.} (1) Zdanie artykułu „$O(n)$ message” jest skrótem: selekcja to $\Theta(n\log n)$
+wiadomości \emph{jednobitowych}; $O(n)$ dotyczy wiadomości weryfikacji/powiadomienia/liczenia (po $O(\log N)$
+bitów). Dlatego w tabeli~\ref{tab:wyniki} wiadomości też rosną jak $n\log n$. (2) Dolne ograniczenie
+$\Omega(n\log n)$ (crossing sequences, [MZ]) artykuł podaje dla algorytmów deterministycznych — tu tylko je
+cytuję. (3) Artykuł nie analizuje czasu; przy jednostkowym opóźnieniu wiadomości selekcja trwa $O(cn)$,
+a weryfikacja i powiadomienie $O(N)$.
+
+\section{Implementacja (Go)}
+
+Cały program to \fn{kod/main.go}. Najważniejsze elementy:
+\begin{itemize}
+\item \fn{NodeState} — stan jednego procesora jako osobna struktura: \fn{Phase}, \fn{Role}
+  (\fn{Sleep}, \fn{Active}, \fn{Passive}, \fn{Candidate}, \fn{Leader}, \fn{Knows}), \fn{Round},
+  \fn{MyBit}, \fn{IsCand}, \fn{ResultSeen}, \fn{KnownN}, \fn{Halted} oraz własny generator losowy.
+  \fn{ID} służy tylko do logów — algorytm go nie czyta.
+\item \fn{Message} — jeden typ dla wszystkich wiadomości (\fn{Wake}, \fn{Bit}, \fn{Verify},
+  \fn{Result}, \fn{Count}, \fn{Size}) z polami \fn{Phase}, \fn{B}, \fn{D}, \fn{K}, \fn{U}, \fn{J};
+  \fn{Round} jest przesyłane wyłącznie dla czytelności logu.
+\item \fn{HandleMessage(m, cfg)} — \textbf{kod obsługi jednej wiadomości} (wymóg dla sieci
+  asynchronicznej): budzenie/restart przy nowszej fazie, odrzucenie przeterminowanej, potem
+  \fn{switch} po typie. Gałąź \fn{Verify} na końcu trasy tworzy \fn{Result} z \fn{D:~-1} i przez
+  \fn{fallthrough} od razu stosuje werdykt w tym samym procesorze — to jest realizacja kroku 3.
+  Funkcja zwraca listę wiadomości do następnika.
+\item \fn{node} — gorutyna procesora: czyta z kanału \fn{in} (bez bufora), woła \fn{HandleMessage},
+  oddaje listę wysłanych na kanał \fn{out}; kończy się po \fn{Halted}.
+\item \fn{run} — \textbf{dyspozytor} w \fn{main}: trzyma kolejki FIFO krawędzi (\fn{queues[j]} to
+  krawędź $v_{j-1}\to v_j$), w pętli \fn{pickNonEmpty} losuje niepustą kolejkę (losowy harmonogram,
+  powtarzalny przez \fn{-seed}), dostarcza jedną wiadomość, dopisuje odpowiedzi do kolejki następnika,
+  loguje „\texttt{vX wysłał M do vY}” i czeka globalne \fn{Delay}. Kończy, gdy wszystkie kolejki są puste.
+\item \fn{wakeSet} — zbiór wake-upów (\fn{one}/\fn{all}/\fn{rand}); \fn{Stats.Count} — liczniki
+  wiadomości wg typu i bitów (\msg{BIT}: 1, \msg{VERIFY}: $\lceil\log_2 2N\rceil+2$, \msg{RESULT}:
+  $\lceil\log_2 2N\rceil+1$, \msg{COUNT}/\msg{SIZE}: $\lceil\log_2 2N\rceil$; znaczniki typu i fazy
+  pominięte jako $O(1)$ w oczekiwaniu); \fn{summary} — podsumowanie i kontrola poprawności
+  (1 lider, wszyscy znają $n$, wszyscy zakończyli; inaczej kod wyjścia 1).
+\end{itemize}
+
+\paragraph{Dlaczego dyspozytor, a nie kanały między gorutynami.} Przy kanałach bez bufora
+łączących sąsiadów w cyklu procesor blokuje się na wysyłaniu do następnika, który sam blokuje się na
+wysyłaniu — zakleszczenie. Model z artykułu ma nieograniczone bufory, więc trzymam je jawnie
+w dyspozytorze; kanały gorutyn pozostają bez bufora. W każdej chwili dostarczana jest jedna wiadomość, co
+odpowiada modelowi §3.1 („at any time at most one message arrives”).
+
+\paragraph{Odstępstwo od modelu.} §3.1 pozwala wysłać po zdarzeniu co najwyżej jedną wiadomość; u mnie
+koniec trasy wysyła \msg{RESULT} i bit nowej fazy, a lider — \msg{RESULT} i \msg{COUNT}. Da się to
+zasymulować lokalną kolejką wyjściową; nie zmienia to poprawności ani złożoności.
+
+\section{Wyniki eksperymentów}
+
+Tabela~\ref{tab:wyniki}: średnie z 20 uruchomień (\fn{-seed 1..20}, \fn{-wake rand}, domyślne $c$) dla
+dwóch skrajnych wartości $N$: $N=n$ oraz $n=2N-1$. We wszystkich 320 uruchomieniach wynik był poprawny.
+Tabelę generuje skrypt \fn{raport/bench.sh}.
+
+\begin{table}[h]
+\centering\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{rrr rrrr rr r rr r}
+\toprule
+$n$ & $N$ & $c$ & \msg{BIT} & \msg{VERIFY} & \msg{RESULT} & \msg{C+S} & wiad. & bity & fazy &
+$\frac{\text{wiad.}}{n\log_2 n}$ & $\frac{\text{bity}}{n\log_2 n}$ & OK \\
+\midrule
+\rows{tabela.tex}
+\bottomrule
+\end{tabular}
+\caption{Skalowanie. Górna część: $N=n$; dolna: $N=\lceil(n+1)/2\rceil$, czyli $n=2N-1$
+(\msg{C+S} = \msg{COUNT} + \msg{SIZE}).}
+\label{tab:wyniki}
+\end{table}
+
+\noindent Obserwacje, zgodne z tabelą~\ref{tab:koszt}:
+\begin{itemize}
+\item \msg{BIT} $=c\cdot n\cdot F$ dokładnie (\ref{n:runda}), np.\ $54\cdot1024=55296$;
+  \msg{VERIFY} $=$ \msg{RESULT} $=2N-1$ (zawsze $a=1$ i $F=1$ przy domyślnym $c$), \msg{C+S} $=2n$.
+\item Iloraz wiadomości do $n\log_2n$ maleje i stabilizuje się: dominuje selekcja z $c/\log_2 n\to
+  2/\log_2\frac43\approx4{,}82$; przy $N=n$ jest nieco więcej, bo $c$ liczone jest od $2N=2n$.
+\item Przy $n=2N-1$ wiadomości jest mniej: $c$ jest mniejsze, a trasy $2N-1\approx n$ zamiast $\approx2n$.
+\end{itemize}
+
+\noindent Tabela~\ref{tab:c} pokazuje kompromis przy zmianie $c$ ($n=N=64$, 20 seedów). Za małe $c$
+(10–11, blisko granicy $2^c\ge n$) daje dziesiątki–setki ponowień i wielokrotnie większy koszt;
+domyślne $c=34$ daje zawsze jedną fazę, ale płaci za ostrożność w selekcji. Minimum kosztu leży
+w okolicy $c\approx14$–$17$, czyli $\approx\log_{4/3}n$ — zgodnie z intuicją z §3.4.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{rrrrrrr}
+\toprule
+$c$ & śr.\ fazy & maks.\ fazy & \msg{BIT} & \msg{VERIFY}+\msg{RESULT} & wiadomości & bity \\
+\midrule
+\rows{tabela_c.tex}
+\bottomrule
+\end{tabular}
+\caption{Wpływ liczby rund selekcji $c$ ($n=N=64$, średnie z 20 uruchomień).}
+\label{tab:c}
+\end{table}
+
+\section{Jak uruchomić}
+
+Wymagany Go $\ge1.21$ (kod używa wbudowanego \fn{min}). Na Ubuntu: \texttt{sudo apt install golang-go}
+(Ubuntu $\ge$ 24.04; na 22.04 pakiet ma Go 1.18 — wtedy \texttt{sudo snap install go -{}-classic}).
+
+\begin{verbatim}
+cd kod
+go run . -n 6 -N 4 -c 3 -wake one -seed 52 -delay 200ms   # demo z ponowieniem
+go run . -n 1024 -N 600 -wake rand -quiet               # tylko podsumowanie
+\end{verbatim}
+
+\noindent Flagi: \fn{-n} rzeczywisty rozmiar; \fn{-N} znane $N$ (wymagane $N\le n\le2N-1$); \fn{-c} liczba
+rund selekcji (0 = domyślne $\lceil2\log_{4/3}2N\rceil$; odrzucane, gdy $2^c<n$); \fn{-wake}
+\fn{one}|\fn{all}|\fn{rand}; \fn{-seed} ziarno (harmonogram i rzuty — przebieg jest powtarzalny);
+\fn{-delay} globalne opóźnienie między dostarczeniami (domyślnie 10\,ms, \fn{0} = bez opóźnienia);
+\fn{-quiet} bez logu wiadomości. Program kończy się kodem 1, jeśli wynik jest niepoprawny.
+
+Przebieg \fn{-seed 52} z pierwszego polecenia: w fazie 0 są 4 kandydaci, wszystkie trasy kończą się
+z $k=3$, a \msg{RESULT}(fałsz) restartuje pierścień (widać ucinanie tras z kroku 3: zamiast $4\cdot7$
+wysłano tylko 6 wiadomości \msg{RESULT} fazy 0, resztę pierścienia zrestartowały bity fazy 1);
+w fazie 1 zostaje jeden kandydat, który zostaje liderem i ustala $n=6$; podsumowanie: \msg{BIT} 36 $=3\cdot6\cdot2$, \msg{VERIFY} 35, \msg{RESULT} 13,
+\msg{COUNT} 6, \msg{SIZE} 6.
+
+Całość (program, tabele, ten raport) buduje skrypt w katalogu głównym:
+\begin{verbatim}
+./build.sh deps      # jednorazowo: pakiety apt (Go, TeX Live z polskim)
+./build.sh           # kompilacja programu + raport/raport.pdf
+./build.sh bench     # ponowne pomiary -> raport/tabela*.tex, potem raport
+\end{verbatim}
+
+\end{document}

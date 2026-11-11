@@ -1,0 +1,6 @@
+kod/itairodeh
+raport/*.aux
+raport/*.fdb_latexmk
+raport/*.fls
+raport/*.log
+raport/*.out
